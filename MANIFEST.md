@@ -1,0 +1,113 @@
+# MANIFEST
+
+- Olusturulma tarihi: 2026-07-21
+- Kaynak workspace yolu: C:\Users\drsam\Documents\Kimi\Workspaces\dietbridge_mobil
+- Toplam dosya sayisi: 168 (MANIFEST.md haric; MANIFEST dahil 169)
+- mobile-ui-port dosya sayisi: 98
+- JavaScript dosya sayisi: 96
+- Markdown dosya sayisi: 6 (+ MANIFEST.md)
+- Eklenen referans dosyalari: docs/DietBridge_Tasarim_Sistemi.md, docs/DietBridge_UI_Uygulama_Promptu_20260719.md, reference-showcase/src/dietbridge/ (63 .tsx + 1 .ts), reference-showcase/src/App.tsx, reference-showcase/src/index.css
+- Haric birakilan klasorler: node_modules/, dist/, .git/, package-lock.json, design_system/, dietbridge-showcase/ geri kalani
+- Secret taramasi sonucu: TEMIZ — .env, .pem, .key, credentials, service-account, supabase dosyasi yok; SUPABASE_URL, SUPABASE_ANON_KEY, SERVICE_ROLE, API_KEY, ACCESS_TOKEN, REFRESH_TOKEN, PRIVATE_KEY, Authorization, Bearer icerik kalibi bulunamadi
+- Kaynak dosyalarda degisiklik yapildi mi: HAYIR — mobile-ui-port/ kaynaklari birebir kopyalandi; yalnizca .gitignore, kok README.md ve MANIFEST.md yeni olusturuldu
+
+## mobile-ui-port/ kaynak dosya listesi
+
+- mobile-ui-port/README.md
+- mobile-ui-port/components/AppButton.js
+- mobile-ui-port/components/AppCard.js
+- mobile-ui-port/components/AppInput.js
+- mobile-ui-port/components/AppScreen.js
+- mobile-ui-port/components/AppSkeleton.js
+- mobile-ui-port/components/BottomSheetView.js
+- mobile-ui-port/components/ChoiceChip.js
+- mobile-ui-port/components/EmptyState.js
+- mobile-ui-port/components/ErrorState.js
+- mobile-ui-port/components/Icon.js
+- mobile-ui-port/components/InlineAlert.js
+- mobile-ui-port/components/ProgressBar.js
+- mobile-ui-port/components/StatusBadge.js
+- mobile-ui-port/components/index.js
+- mobile-ui-port/contracts/UI_CONTRACTS.md
+- mobile-ui-port/features/home/DailyMacrosCard.js
+- mobile-ui-port/features/home/DietitianMessageCard.js
+- mobile-ui-port/features/home/GreetingHeader.js
+- mobile-ui-port/features/home/HomeEmptyState.js
+- mobile-ui-port/features/home/HomeErrorState.js
+- mobile-ui-port/features/home/HomeSkeleton.js
+- mobile-ui-port/features/home/HomeView.js
+- mobile-ui-port/features/home/NextMealCard.js
+- mobile-ui-port/features/home/OfflineBanner.js
+- mobile-ui-port/features/home/TodayMealsList.js
+- mobile-ui-port/features/home/WaterCard.js
+- mobile-ui-port/features/home/index.js
+- mobile-ui-port/features/meal-detail/MealDetailView.js
+- mobile-ui-port/features/meal-detail/MealPhotoErrorView.js
+- mobile-ui-port/features/meal-detail/MealPhotoSheetView.js
+- mobile-ui-port/features/meal-detail/MealPhotoUploadingView.js
+- mobile-ui-port/features/meal-detail/index.js
+- mobile-ui-port/features/meal-plan/DayStrip.js
+- mobile-ui-port/features/meal-plan/MealListItem.js
+- mobile-ui-port/features/meal-plan/MealPlanView.js
+- mobile-ui-port/features/meal-plan/WeekHeader.js
+- mobile-ui-port/features/meal-plan/index.js
+- mobile-ui-port/features/messages/ChatView.js
+- mobile-ui-port/features/messages/EmptyMessagesView.js
+- mobile-ui-port/features/messages/FailedMessageState.js
+- mobile-ui-port/features/messages/ImageMessagePreview.js
+- mobile-ui-port/features/messages/MessageBubble.js
+- mobile-ui-port/features/messages/MessageComposer.js
+- mobile-ui-port/features/messages/MessagesListView.js
+- mobile-ui-port/features/messages/index.js
+- mobile-ui-port/features/onboarding/DietitianConnectionActiveView.js
+- mobile-ui-port/features/onboarding/DietitianConnectionEmptyView.js
+- mobile-ui-port/features/onboarding/DietitianConnectionErrorView.js
+- mobile-ui-port/features/onboarding/DietitianConnectionPendingView.js
+- mobile-ui-port/features/onboarding/ForgotPasswordSuccessView.js
+- mobile-ui-port/features/onboarding/ForgotPasswordView.js
+- mobile-ui-port/features/onboarding/LoginView.js
+- mobile-ui-port/features/onboarding/OnboardingHeader.js
+- mobile-ui-port/features/onboarding/PasswordToggle.js
+- mobile-ui-port/features/onboarding/ProfileSetupStep1View.js
+- mobile-ui-port/features/onboarding/ProfileSetupStep2View.js
+- mobile-ui-port/features/onboarding/ProfileSetupStep3View.js
+- mobile-ui-port/features/onboarding/ProfileSetupStep4View.js
+- mobile-ui-port/features/onboarding/RegisterView.js
+- mobile-ui-port/features/onboarding/SplashView.js
+- mobile-ui-port/features/onboarding/StepProgress.js
+- mobile-ui-port/features/onboarding/WelcomeView.js
+- mobile-ui-port/features/onboarding/index.js
+- mobile-ui-port/features/profile/GoalEditView.js
+- mobile-ui-port/features/profile/HealthEditView.js
+- mobile-ui-port/features/profile/LifestyleEditView.js
+- mobile-ui-port/features/profile/NotificationSettingsView.js
+- mobile-ui-port/features/profile/PersonalInfoEditView.js
+- mobile-ui-port/features/profile/PrivacySecurityView.js
+- mobile-ui-port/features/profile/ProfileHeader.js
+- mobile-ui-port/features/profile/ProfileView.js
+- mobile-ui-port/features/profile/UnsavedChangesDialogView.js
+- mobile-ui-port/features/profile/index.js
+- mobile-ui-port/features/progress/AddMeasurementSheetView.js
+- mobile-ui-port/features/progress/AddWeightSheetView.js
+- mobile-ui-port/features/progress/BodyMeasurementsCard.js
+- mobile-ui-port/features/progress/MeasurementHistoryView.js
+- mobile-ui-port/features/progress/ProgressView.js
+- mobile-ui-port/features/progress/WaterWeeklyChartView.js
+- mobile-ui-port/features/progress/WeightChartView.js
+- mobile-ui-port/features/progress/WeightSummaryCard.js
+- mobile-ui-port/features/progress/index.js
+- mobile-ui-port/features/status/EmptyDataView.js
+- mobile-ui-port/features/status/FullScreenErrorView.js
+- mobile-ui-port/features/status/PullToRefreshHint.js
+- mobile-ui-port/features/status/ToastView.js
+- mobile-ui-port/features/status/index.js
+- mobile-ui-port/features/water/WaterSheetView.js
+- mobile-ui-port/features/water/index.js
+- mobile-ui-port/preview/PreviewGallery.js
+- mobile-ui-port/preview/previewData.js
+- mobile-ui-port/theme/colors.js
+- mobile-ui-port/theme/index.js
+- mobile-ui-port/theme/radius.js
+- mobile-ui-port/theme/shadows.js
+- mobile-ui-port/theme/spacing.js
+- mobile-ui-port/theme/typography.js
