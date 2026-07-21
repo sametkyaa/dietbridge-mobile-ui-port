@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "DietBridge UI Audit",
+    "slug": "dietbridge-ui-audit",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F7F9F5",
+    "ios": {
+      "bundleIdentifier": "com.dietbridge.uiaudit",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.dietbridge.uiaudit"
+    }
+  }
+}
