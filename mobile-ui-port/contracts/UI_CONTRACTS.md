@@ -19,6 +19,30 @@ Genel kurallar (tüm bileşenler için geçerli):
   etkileyen metin prop'ları listelenmiştir.
 - Alt bileşenler (kartlar, balonlar, liste satırları) ait oldukları ana
   görünümün bölümünde kısaca gruplanmıştır.
+- **Öğün tamamlama**: UI callback'i (`onToggleMeal`, `onUndoMeal`,
+  `onToggleComplete`) yalnız host ViewModel'e gider. Gerçek entegrasyonda
+  mevcut güvenli meal completion RPC kullanılmalıdır; UI doğrudan
+  `meals.update` veya herhangi bir tablo çağrısı YAPMAZ.
+- **Pending kilitleri**: İşlemi süren kayıt host'tan pending prop'larıyla
+  gelir (`updatingMealId`, `isMealUpdating`, `isCompletionUpdating`,
+  `isAddingWater`, `isUndoingWater`, `isChangingEmail`). İşlem sürerken ilgili
+  buton disabled olur, `accessibilityState.busy=true` yansır ve callback tekrar
+  çağrılmaz. UI bu katmanda state'i optimistic olarak değiştirmez; gerçek
+  sonuç host'tan props ile gelir.
+- **Mevcut kilo**: `GoalEditView` mevcut kilo kaydetmez. Mevcut kilo
+  değişikliği ayrı ölçüm akışından geçer (`ProgressView` +
+  `AddWeightSheetView`); generic profil `onSave` callback'i kilo güncellemesi
+  gerektirmez.
+- **E-posta**: `PersonalInfoEditView` generic profil save ile e-posta
+  değiştirmez. E-posta değişikliği ayrı Auth akışı gerektirir
+  (`onRequestEmailChange` callback'i).
+- **Preview**: `PreviewGallery` ve `previewData` production bundle'a dahil
+  EDİLMEMELİDİR; yalnız audit/önizleme amaçlıdır. Production feature
+  dosyaları `preview/` altından import yapmaz.
+- **Icon adapter**: Tüm ikonlar `components/Icon.js` üzerinden semantic
+  adlarla kullanılır; Unicode/emoji glyph YOKTUR. Adapter varsayılan olarak
+  `@expo/vector-icons` (MaterialCommunityIcons) kullanır. Host farklı bir ikon
+  seti isterse yalnız bu dosya değiştirilir.
 
 ---
 
@@ -40,6 +64,10 @@ Genel kurallar (tüm bileşenler için geçerli):
 - `dietitianMessage`: `{ name, initials, metaLabel, text }`
 - `dayCompletion`: `{ allCompleted, title?, description? }`
 - `refreshing`: boolean (RefreshControl için)
+- `updatingMealId`: string | null — toggle işlemi süren öğünün id'si
+- `isMealUpdating`: boolean — hero kart tamamlama/geri al işlemi sürüyor
+- `isAddingWater`: boolean — hızlı su ekleme sürüyor
+- `isUndoingWater`: boolean — su geri alma sürüyor
 
 ### Callbacks
 - `onNotificationPress()` · `onAvatarPress()`
@@ -51,7 +79,8 @@ Genel kurallar (tüm bileşenler için geçerli):
 - `onOpenMessages()` · `onOpenPlan()` · `onRetry()` · `onRefresh()`
 
 ### Loading durumu
-`status='loading'` → `HomeSkeleton` (animated) tam içerik yerine gösterilir.
+`status='loading'` → `HomeSkeleton` (animated, TEK ortak animasyon döngüsü)
+tam içerik yerine gösterilir.
 
 ### Empty durumu
 `status='empty'` → header + `HomeEmptyState` (aksiyonu `onOpenMessages`'a
@@ -61,11 +90,22 @@ bağlı) + su kartı kullanılabilir kalır.
 `status='error'` → `HomeErrorState` (`onRetry` ile).
 
 ### Disabled/submitting durumu
-Yok; gönderim durumu bu ekranda tutulmaz.
+Pending prop'ları host'tan gelir ve ilgili kontrolleri kilitler:
+
+| Pending prop | Kilitlenen kontrol | Disabled buton |
+| --- | --- | --- |
+| `updatingMealId` | o öğünün `MealListItem` toggle'ı (+ aynı öğünse hero CTA) | toggle dairesi |
+| `isMealUpdating` | `NextMealCard` "Öğünü yedim" / "Geri al" | ana CTA (spinner) + geri al |
+| `isAddingWater` | tüm hızlı su ekleme düğmeleri | quick düğmeler (spinner) |
+| `isUndoingWater` | su geri al düğmesi | geri al (spinner) |
+
+İşlem sürerken `accessibilityState.busy=true` yansır, callback tekrar
+çağrılmaz; diğer öğünler/kontroller kullanılabilir kalır.
 
 ### Backend notu
 Dashboard/ana sayfa ViewModel'i bağlanır (öğün planı, makrolar, su özeti,
-diyetisyen mesajı özeti). Bu bileşen backend çağrısı yapmaz.
+diyetisyen mesajı özeti). Öğün tamamlama host'ta güvenli meal completion
+RPC'sine bağlanır; bu bileşen backend çağrısı yapmaz.
 
 ### Navigation ihtiyacı
 `onNotificationPress` → bildirimler, `onAvatarPress` → profil,
@@ -76,6 +116,12 @@ mesajlar, `onOpenWaterHistory` → su geçmişi/sheet.
 - `RefreshControl`: `onRefresh` verilirse bağlanır; pull-to-refresh state'i
   (`refreshing`) host'ta tutulur.
 - `isOffline` bayrağının bağlantı durumu servisinden beslenmesi gerekir.
+- `TodayMealsList` FlatList KULLANMAZ; satırlar düz `View` içinde gerçek
+  `meal.id` key'iyle render edilir — HomeView ScrollView'ı içinde iç içe
+  VirtualizedList uyarısı oluşmaz.
+- `MealListItem` satırı iki KARDEŞ Pressable'dan oluşur (detay alanı +
+  toggle); iç içe Pressable yoktur, toggle basışı detay navigasyonunu
+  tetiklemez.
 - Alt bileşenler: `GreetingHeader`, `DailyMacrosCard`, `NextMealCard`
   (durumu prop'lardan türetilir: `dayCompleted | none | completed | delayed |
   upcoming`), `WaterCard`, `TodayMealsList`, `DietitianMessageCard`,
@@ -90,18 +136,21 @@ mesajlar, `onOpenWaterHistory` → su geçmişi/sheet.
 - `days`: `[{ id, dayLabel, dateLabel, isToday?, isCompleted? }]`
 - `selectedDayId`, `selectedDayLabel`
 - `meals`: seçili günün öğünleri (MealListItem formatı)
-- `status`: `'loading' | 'ready' | 'empty'`
+- `status`: `'loading' | 'ready' | 'empty' | 'error'`
 - `showUpdatedNotice`: boolean — plan güncellendi bilgi şeridi
 - `updatedMessage`, `planUpdatedAt`: şerit metni (`planUpdatedAt` varsa
   `… · {planUpdatedAt}` biçiminde eklenir)
 - `emptyTitle`, `emptyDescription` (gün boş), `weekEmptyTitle`,
   `weekEmptyDescription` (hafta boş)
+- `errorTitle`, `errorDescription`: error durumu metinleri
+- `updatingMealId`: string | null — toggle işlemi süren öğünün id'si
 - `refreshing`: boolean
 
 ### Callbacks
 - `onSelectDay(dayId)` · `onPreviousWeek()` · `onNextWeek()` · `onTodayPress()`
 - `onMealPress(mealId)` · `onToggleMeal(mealId)`
 - `onBack()` — ayrılmıştır; görünüm kendi geri düğmesini çizmez (sekme kökü)
+- `onRetry()` — error durumunda "Tekrar dene"
 - `onRefresh()` — RefreshControl bağlanır
 
 ### Loading durumu
@@ -113,14 +162,18 @@ mesajlar, `onOpenWaterHistory` → su geçmişi/sheet.
 olarak kart içi EmptyState.
 
 ### Error durumu
-Yok (status kümesinde `error` yok); hata host tarafında yönetilir.
+`status='error'` → `ErrorState` (`errorTitle` + `errorDescription` +
+`onRetry`).
 
 ### Disabled/submitting durumu
-Yok.
+`updatingMealId` verildiğinde yalnız o öğünün `MealListItem` toggle'ı
+disabled olur (`accessibilityState.busy=true`), callback tekrar çağrılmaz;
+diğer öğünler kullanılabilir kalır.
 
 ### Backend notu
 Haftalık plan ViewModel'i bağlanır (gün listesi, seçili gün öğünleri, plan
-güncelleme bildirimi). Bu bileşen backend çağrısı yapmaz.
+güncelleme bildirimi). Öğün tamamlama host'ta güvenli meal completion
+RPC'sine bağlanır; bu bileşen backend çağrısı yapmaz.
 
 ### Navigation ihtiyacı
 `onMealPress` → öğün detay ekranı. `onBack` host navigasyon başlığına
@@ -144,6 +197,7 @@ bağlanmak için ayrılmıştır.
   photo: { status: 'none' | 'ready', uri? } }`
 - `status`: `'loading' | 'ready' | 'error'`
 - `completionState`: `'pending' | 'completed'`
+- `isCompletionUpdating`: boolean — tamamlama/geri al işlemi sürüyor
 - `title`, `completedBadgeLabel` (örn. "Tamamlandı · 13:38")
 - Metin prop'ları: `markEatenLabel`, `completedLabel`, `undoLabel`,
   `contentsTitle`, `addPhotoLabel`, `retakePhotoLabel`, `removePhotoLabel`
@@ -166,11 +220,15 @@ Ayrı empty durumu yok; `meal` null/undefined ise error durumu gösterilir.
 `onRetry`).
 
 ### Disabled/submitting durumu
-Yok; tamamlama isteğinin kilitlenmesi host'ta yönetilir.
+`isCompletionUpdating=true` iken "Öğünü yedim" CTA'sı spinner'a geçer ve
+disabled olur; tamamlandı durumundaki "Geri al" butonu da kilitlenir
+(`accessibilityState.busy=true`). Callback işlem sürerken tekrar çağrılmaz.
 
 ### Backend notu
 Öğün detay ViewModel'i + öğün tamamlama servisi + fotoğraf storage akışı
-bağlanır. Bu bileşen backend çağrısı yapmaz.
+bağlanır. `onToggleComplete` yalnız host ViewModel'e gider; gerçek
+entegrasyonda mevcut güvenli meal completion RPC kullanılmalıdır. UI doğrudan
+`meals.update` çağrısı YAPMAZ.
 
 ### Navigation ihtiyacı
 `onBack` → önceki ekran (plan veya ana sayfa).
@@ -193,6 +251,8 @@ bağlanır. Bu bileşen backend çağrısı yapmaz.
   biçimlenir)
 - `quickOptions`: `[{ id, amountMl, label }]` (varsayılan 200/250/500 ml)
 - `lastEntryLabel`: string — verilirse "geri al" satırı görünür
+- `isAddingWater`: boolean — hızlı ekleme sürüyor
+- `isUndoingWater`: boolean — geri alma sürüyor
 - Metin prop'ları: `title`, `goalSuffix`, `undoLabel`, `historyLabel`,
   `doneLabel`
 
@@ -212,7 +272,11 @@ Yok; `goalMl=0` ise yüzde 0 hesaplanır.
 Yok.
 
 ### Disabled/submitting durumu
-Yok; kaydetme kilidi host'tadır.
+`isAddingWater=true` iken TÜM hızlı ekleme düğmeleri disabled olur ve
+spinner gösterir (`accessibilityState.busy=true`); `isUndoingWater=true` iken
+geri al düğmesi kilitlenir. Callback aynı işlem sürerken tekrar çağrılmaz.
+Su state'i bu katmanda optimistic olarak değiştirilmez; host gerçek sonucu
+props ile gönderir.
 
 ### Backend notu
 Su takibi ViewModel'i bağlanır (günlük toplam, hızlı ekleme, geri alma,
@@ -452,6 +516,9 @@ Bu bileşen backend çağrısı yapmaz.
 - `termsAccepted`: boolean (kullanım koşulları onayı)
 - `fullNameError`, `emailError`, `passwordError`, `passwordConfirmError`
 - `generalError`
+- `termsError`: string — koşul onayı hatası; checkbox altında
+  `accessibilityLiveRegion="polite"` ile duyurulur
+- `termsLinkLabel`, `privacyLinkLabel`: bağlantı metinleri
 - `passwordStrength`: `{ percent: 0–100, label, tone? }` — verilirse şifre
   gücü göstergesi çizilir
 - `isSubmitting`: boolean
@@ -460,6 +527,8 @@ Bu bileşen backend çağrısı yapmaz.
 - `onFullNameChange(text)` · `onEmailChange(text)` · `onPasswordChange(text)` ·
   `onPasswordConfirmChange(text)`
 - `onTogglePassword()` · `onTogglePasswordConfirm()` · `onToggleTerms()`
+- `onOpenTerms()` — "Kullanım koşulları" metni (ayrı tıklanabilir link)
+- `onOpenPrivacy()` — "Gizlilik politikası" metni (ayrı tıklanabilir link)
 - `onSubmit()` · `onLogin()`
 
 ### Loading durumu
@@ -469,12 +538,14 @@ Yok.
 Yok.
 
 ### Error durumu
-Alan hataları AppInput altında; `generalError` → error InlineAlert.
+Alan hataları AppInput altında; `generalError` → error InlineAlert;
+`termsError` → checkbox altında canlı bölgeli hata metni.
 
 ### Disabled/submitting durumu
-`isSubmitting=true` → buton spinner ("Hesap oluşturuluyor…"). **Not:**
-`termsAccepted=false` iken buton UI tarafında devre dışı bırakılmaz; koşul
-onayını host `onSubmit` içinde doğrular.
+Kayıt butonu `disabled = !termsAccepted || isSubmitting`. `isSubmitting=true`
+→ buton spinner ("Hesap oluşturuluyor…"). Checkbox satırının boş alanına
+basmak `onToggleTerms`'i tetikler; koşul/gizlilik metinleri kendi
+callback'lerini çağırır (checkbox durumunu değiştirmez).
 
 ### Backend notu
 Auth flow (kayıt ViewModel'i) bağlanır; şifre gücü hesabı ve doğrulama
@@ -619,14 +690,20 @@ Yok.
 ## ProfileSetupStep3View (`features/onboarding/ProfileSetupStep3View.js`)
 
 ### Data props
-- `activityOptions` / `dietTypeOptions` / `sleepOptions`: `[{ value, label }]`
-- `selectedActivity` / `selectedDietType` / `selectedSleep`: value | null
+- `activityOptions` / `dietTypeOptions`: `[{ value, label }]`
+- `selectedActivity` / `selectedDietType`: value | null
+- `sleepHours`: string — sayısal uyku süresi (saat); `AppInput`
+  `keyboardType="decimal-pad"` ile girilir
+- `sleepHoursError`: alan hatası (aralık/format doğrulaması UI'da YAPILMAZ,
+  hata host'tan gelir)
 - `waterGoalLabel`: string (örn. "2,5") — stepper değeri hazır gelir
 - `waterGoalUnit` (varsayılan "L")
 - `step` (3), `totalSteps` (4)
 
 ### Callbacks
-- `onSelectActivity(value)` · `onSelectDietType(value)` · `onSelectSleep(value)`
+- `onSelectActivity(value)` · `onSelectDietType(value)`
+- `onSleepHoursChange(text)` — uyku chip'leri kaldırıldı; uyku süresi sayısal
+  saat olarak alınır (DietBridge mobil veri sözleşmesi)
 - `onDecreaseWaterGoal()` · `onIncreaseWaterGoal()` — artır/azalt mantığı
   host'tadır
 - `onBack()` · `onContinue()` · `onSkip()`
@@ -653,17 +730,34 @@ Yok.
 
 ### Data props
 - `searchQuery`: controlled string (liste içi arama)
-- `conditionOptions` / `intoleranceOptions` / `dislikedFoodOptions`:
-  `[{ value, label }]`
-- `selectedConditions` / `selectedIntolerances` / `selectedDislikedFoods`:
-  `value[]` (çoklu seçim)
+- Tekli seçim grupları:
+  - `bloodTypeOptions` / `selectedBloodType` — kan grubu
+  - `smokingOptions` / `selectedSmoking` — sigara kullanımı
+  - `alcoholOptions` / `selectedAlcohol` — alkol kullanımı
+- Çoklu seçim + özel ekleme grupları (`[{ value, label }]` + `value[]`):
+  - `conditionOptions` / `selectedConditions` — kronik rahatsızlıklar
+  - `medicationOptions` / `selectedMedications` — kullanılan ilaçlar
+  - `intoleranceOptions` / `selectedIntolerances` — besin intoleransları
+  - `dislikedFoodOptions` / `selectedDislikedFoods` — sevilmeyen besinler
+- `lastLabDate`: controlled string — son tahlil tarihi
+- `lastLabDateError`: alan hatası (format doğrulaması host'tadır)
 - `step` (4), `totalSteps` (4)
+
+Seçenek listeleri her zaman props'tan gelir; feature dosyasında seçenek
+hardcode EDİLMEZ.
 
 ### Callbacks
 - `onSearchQueryChange(text)`
-- `onToggleCondition(value)` · `onToggleIntolerance(value)` ·
-  `onToggleDislikedFood(value)`
-- `onAddCustomFood()` — verilirse "Özel besin ekle" chip'i görünür
+- `onSelectBloodType(value)` · `onSelectSmoking(value)` ·
+  `onSelectAlcohol(value)`
+- `onToggleCondition(value)` · `onToggleMedication(value)` ·
+  `onToggleIntolerance(value)` · `onToggleDislikedFood(value)`
+- Özel ekleme (callback verilirse ilgili grupta "Özel ekle" chip'i görünür):
+  - `onAddCustomCondition()` — kronik rahatsızlıklar
+  - `onAddCustomMedication()` — kullanılan ilaçlar
+  - `onAddCustomIntolerance()` — besin intoleransları
+  - `onAddCustomFood()` — sevilmeyen besinler
+- `onLastLabDateChange(text)`
 - `onBack()` · `onContinue()` · `onSkip()`
 
 ### Loading / Empty / Error durumu
@@ -1068,6 +1162,11 @@ bağlantı akışı.
   timeLabel, status?, dateLabel? }]` — eski → yeni verilir; liste ters
   çevrilerek (inverted) render edilir. `dateLabel` verilen mesajın üstünde
   tarih ayırıcı gösterilir.
+- `status`: `'loading' | 'ready' | 'empty' | 'error'` (varsayılan `'ready'`)
+- `isLoadingMore`: boolean — eski mesajlar yükleniyor
+- `hasMore`: boolean — daha eski mesaj var
+- `errorTitle`, `errorDescription` — ekran geneli hata metinleri
+- `emptyTitle`, `emptyDescription` — boş sohbet metinleri
 - `composerValue`: controlled string
 - `isSending`: boolean
 - `composerPlaceholder`
@@ -1078,16 +1177,26 @@ bağlantı akışı.
 - `onRetryMessage(message)` — başarısız mesajın "Tekrar dene" aksiyonu
 - `onDeleteMessage(message)` — MessageBubble'a iletilir
 - `onPickImage()` — composer'daki görsel düğmesi
+- `onLoadMore()` — `onEndReached` YALNIZ `hasMore && !isLoadingMore` iken
+  tetiklenir
+- `onRetry()` — `status='error'` iken ErrorState'in tekrar dene düğmesi
 
 ### Loading / Empty durumu
-Yok; boş mesaj listesi düz boş liste olarak görünür.
+- `status='loading'` → mesaj iskeleti (skeleton satırları).
+- `status='empty'` → sakin boş sohbet görünümü (`emptyTitle`/`emptyDescription`);
+  composer açık kalır, ilk mesaj gönderilebilir.
 
 ### Error durumu
-Mesaj bazlı: başarısız mesajlar `FailedMessageState` (MessageBubble içinde)
-ile gösterilir; ekran geneli hata host'tadır.
+- `status='error'` → ekran geneli `ErrorState` (`errorTitle`/`errorDescription`
+  + `onRetry`).
+- Mesaj bazlı: başarısız mesajlar `FailedMessageState` (MessageBubble içinde)
+  ile gösterilir.
 
 ### Disabled/submitting durumu
 `isSending=true` → composer gönderim kilidi (MessageComposer içinde).
+`isLoadingMore=true` → `onLoadMore` tekrar tetiklenmez; listenin eski mesaj
+ucunda (inverted listede footer) spinner + "Eski mesajlar yükleniyor…"
+göstergesi çıkar (`accessibilityLiveRegion="polite"`).
 
 ### Backend notu
 Mesajlaşma servisi (realtime akış, gönderme, yeniden deneme, silme) bağlanır.
@@ -1157,21 +1266,33 @@ kişisel bilgiler düzenleme; `onLogout` → auth çıkış akışı.
 
 ### Data props
 - `title`
-- `values`: `{ fullName, email, phone, birthDate }` — controlled
+- `values`: `{ fullName, phone, birthDate }` — controlled; **e-posta bu
+  objede YOKTUR**
 - `errors`: `{ [key]: mesaj }` — alan bazlı hata
 - `initials`: avatar için
+- `email`: string — mevcut e-posta; salt okunur özet satırında gösterilir
+- `emailChangePending`: boolean — doğrulama bekleyen e-posta değişikliği var
+- `isChangingEmail`: boolean — e-posta değişiklik akışı sürüyor
+- `emailChangeLabel` ("Değiştir"), `emailPendingInfo` ("Yeni e-posta adresi
+  için doğrulama bekleniyor."), `emailHint`
 - `isSaving`: boolean
 - `changePhotoLabel`, `saveLabel`, `cancelLabel`
 
 ### Callbacks
-- `onFieldChange(key, value)` · `onChangePhoto()` · `onSave()` · `onCancel()` ·
-  `onBack()`
+- `onFieldChange(key, value)` — yalnız `fullName` | `phone` | `birthDate`
+- `onChangePhoto()` — avatar seçimi (host image picker)
+- `onRequestEmailChange()` — "Değiştir" düğmesi YALNIZ bu callback'i çağırır;
+  e-posta değişikliği `onSave`'e DAHİL EDİLMEZ (ayrı Auth akışı gerekir)
+- `onSave()` · `onCancel()` · `onBack()`
 
 ### Loading / Empty / Error durumu
-Yok; hatalar `errors` prop'u ile alan altında.
+Yok; hatalar `errors` prop'u ile alan altında. `emailChangePending=true`
+iken bilgi metni (`emailPendingInfo`) e-posta satırı altında gösterilir.
 
 ### Disabled/submitting durumu
-`isSaving=true` → Kaydet butonu spinner.
+`isSaving=true` → Kaydet butonu spinner. `isChangingEmail=true` →
+"Değiştir" düğmesi disabled (`accessibilityState.busy`); generic kaydetme
+etkilenmez.
 
 ### Backend notu
 Profil güncelleme servisi bağlanır; kaydetme mantığı host'tadır. Bu bileşen
@@ -1191,8 +1312,11 @@ backend çağrısı yapmaz.
 
 ### Data props
 - `title`, `intro`
-- `values`: `{ heightCm, currentWeightKg, targetWeightKg, goal, waterGoalLabel,
-  waistCm, hipCm, chestCm, armCm }` — controlled
+- `values`: `{ heightCm, targetWeightKg, goal, waterGoalLabel,
+  waistCm, hipCm, chestCm, armCm }` — controlled; **`currentWeightKg`
+  bu view'dan KALDIRILDI**: mevcut kilo değişikliği ayrı ölçüm akışından
+  geçer (`ProgressView` → `AddWeightSheetView`); generic profil `onSave`'i
+  mevcut kilo güncellemez
 - `errors`: `{ [key]: mesaj }`
 - `goalOptions`: `[{ value, label }]` — tekli hedef seçimi
 - `isSaving`: boolean · `saveLabel`, `cancelLabel`
@@ -1225,14 +1349,20 @@ Yok (stepper saf UI'dır).
 
 ### Data props
 - `title`, `intro`
-- `values`: `{ activity, dietType, sleep, smoking, alcohol }` — controlled
-  tekli seçimler
-- `options`: `{ activity: [...], dietType: [...], sleep: [...], smoking: [...],
-  alcohol: [...] }` — her biri `[{ value, label }]`
+- `values`: `{ activity, dietType, sleepHours, smoking, alcohol }` —
+  controlled; `sleepHours` sayısal string (saat), diğerleri tekli seçim
+- `options`: `{ activity: [...], dietType: [...], smoking: [...],
+  alcohol: [...] }` — her biri `[{ value, label }]`; **uyku için seçenek
+  listesi YOKTUR** (chip kaldırıldı)
+- `errors`: `{ [key]: mesaj }` — `errors.sleepHours` host'tan gelir
+  (aralık/format doğrulaması UI'da YAPILMAZ)
 - `isSaving`: boolean · `saveLabel`, `cancelLabel`
 
 ### Callbacks
-- `onFieldChange(key, value)` · `onSave()` · `onCancel()` · `onBack()`
+- `onFieldChange(key, value)` — uyku dahil tüm alanlar tek callback;
+  uyku `onFieldChange('sleepHours', value)` ile sayısal `AppInput`
+  (`keyboardType="decimal-pad"`) üzerinden akar
+- `onSave()` · `onCancel()` · `onBack()`
 
 ### Loading / Empty / Error durumu
 Yok.
@@ -1362,12 +1492,21 @@ backend çağrısı yapmaz.
 - `twoFactorDescription`
 - `sessionSummary`: açık oturumlar özet metni
 - `deleteDescription`
+- Görünürlük flag'leri (varsayılan **FALSE**; gerçek backend hazır olmayan
+  özellik satırı production'da GÖRÜNMEZ):
+  - `showTwoFactor` — iki adımlı doğrulama satırı
+  - `showSessions` — açık oturumlar satırı
+  - `showDataExport` — verilerimi indir satırı
+  - `showDeleteAccount` — hesabı sil satırı
 
 ### Callbacks
 - `onToggleTwoFactor(enabled)` · `onChangePassword()` · `onOpenSessions()`
 - `onExportData()` — verilerimi indir
 - `onDeleteAccount()` — hesap silme (destructive tonda; onay akışı host'tadır)
 - `onBack()`
+
+İlgili `show*` flag'i false iken satır render edilmez; callback verilmiş
+olması satırı göstermez.
 
 ### Loading / Empty / Error durumu
 Yok.

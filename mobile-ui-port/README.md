@@ -41,11 +41,13 @@ geliştirme/inceleme içindir — production bundle'a almayın.**
 
 ## 5. Varsayılan bağımlılıklar
 
-- Yalnızca `react` + `react-native` core; başka paket şartı yoktur.
-- **`components/Icon.js` placeholder'dır**: Unicode glyph tabanlıdır.
-  Entegrasyonda host'un ikon kütüphanesiyle (örn. `@expo/vector-icons` veya
-  `lucide-react-native`) değiştirilmelidir; glyph adları (`back`, `check`,
-  `camera`, …) eşleme tablosu olarak korunabilir.
+- `react` + `react-native` core ve **`@expo/vector-icons`**
+  (`MaterialCommunityIcons`).
+- **`components/Icon.js` gerçek ikon adapter'ıdır**: semantik isimler
+  (`back`, `check`, `camera`, `droplet`, …) merkezi `ICON_MAP` tablosuyla
+  `MaterialCommunityIcons` glyph'lerine eşlenir. Unicode/emoji placeholder
+  KALDIRILDI. Host başka kütüphane isterse yalnız bu dosyayı değiştirir;
+  component API'si (`name`, `size`, `color`, `style`, `accessible`) korunur.
 - **Grafikler dependency-free placeholder'dır**: `WeightChartView` ve
   `WaterWeeklyChartView` saf `View`/`Text` ile çizer. Host'un grafik paketiyle
   (örn. `react-native-svg`, `victory-native`) değiştirilebilir.
@@ -86,7 +88,8 @@ import etmez.** Hangi ViewModel'in hangi görünüme bağlanacağı
 
 - **`WeightChartView` / `WaterWeeklyChartView`**: placeholder grafikler; host
   grafik paketiyle değiştirilebilir (prop şekilleri korunarak sarılabilir).
-- **`components/Icon.js`**: host ikon kütüphanesiyle değiştirilecek.
+- **`components/Icon.js`**: gerçek adapter (`@expo/vector-icons`
+  `MaterialCommunityIcons`); host yalnız farklı ikon seti isterse değiştirir.
 - **Image picker**: `expo-image-picker` host tarafında entegre edilecek
   (kamera/galeri izinleri dahil).
 - **Safe-area insets**: `AppScreen` iki yaklaşım sunar — `padTop` prop'u
@@ -96,9 +99,11 @@ import etmez.** Hangi ViewModel'in hangi görünüme bağlanacağı
 - **`RefreshControl`**: `onRefresh` + `refreshing` prop'ları verildiğinde
   HomeView, MealPlanView, ProgressView ve MessagesListView'e bağlanır; state
   host'tadır.
-- **`KeyboardAvoidingView`**: kasıtlı olarak host'a bırakılmıştır (AppScreen
-  yalnızca `keyboardShouldPersistTaps="handled"` sağlar). ChatView composer'ı
-  ve form ekranları için host stratejisi uygulanmalıdır.
+- **`KeyboardAvoidingView`**: `BottomSheetView` kendi klavye kaçınmasını
+  içerir (`keyboardAvoiding`, `keyboardVerticalOffset`, `bottomInset`
+  prop'ları; footer klavye arkasında kalmaz). Tam ekran formlar ve ChatView
+  composer'ı için ekran seviyesinde strateji yine host'tadır (AppScreen
+  yalnızca `keyboardShouldPersistTaps="handled"` sağlar).
 
 ## 9. Dokunulmaması gereken güvenlik akışları (Codex entegrasyonu)
 
@@ -124,7 +129,8 @@ mobile-ui-port/
 ├── theme/                 # colors, spacing, typography, radius, shadows
 ├── components/            # AppScreen, AppButton, AppCard, AppInput, AppSkeleton,
 │                          # BottomSheetView, ChoiceChip, EmptyState, ErrorState,
-│                          # Icon (placeholder), InlineAlert, ProgressBar, StatusBadge
+│                          # Icon (MaterialCommunityIcons adapter), InlineAlert,
+│                          # ProgressBar, StatusBadge
 ├── features/
 │   ├── home/              # HomeView + kartlar/durumlar
 │   ├── meal-plan/         # MealPlanView, WeekHeader, DayStrip, MealListItem
