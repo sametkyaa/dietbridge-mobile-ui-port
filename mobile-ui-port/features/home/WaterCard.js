@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../../theme';
 import { AppCard, Icon, ProgressBar } from '../../components';
 
@@ -15,6 +15,11 @@ const DEFAULT_QUICK_OPTIONS = [
  * drunkLabel/goalLabel hazır biçimlendirilmiş metinlerdir (örn. "1,4 L");
  * percent 0–100. quickOptions: [{ id, amountMl, label }] — onAddWater'a
  * amountMl iletilir.
+ *
+ * isAddingWater=true iken tüm hızlı ekleme düğmeleri kilitlenir (busy durumu
+ * erişilebilirliğe yansır); isUndoingWater=true iken geri al düğmesi
+ * kilitlenir. Callback aynı işlem sürerken tekrar çağrılmaz. Su state'i bu
+ * katmanda değiştirilmez; host gerçek sonucu props ile gönderir.
  */
 export function WaterCard({
   title = 'Su takibi',
@@ -22,6 +27,8 @@ export function WaterCard({
   goalLabel,
   percent = 0,
   quickOptions = DEFAULT_QUICK_OPTIONS,
+  isAddingWater = false,
+  isUndoingWater = false,
   undoAccessibilityLabel = 'Son eklemeyi geri al',
   historyLabel = 'Geçmişi gör',
   onAddWater,
@@ -52,22 +59,42 @@ export function WaterCard({
         {quickOptions.map((opt) => (
           <Pressable
             key={opt.id}
-            onPress={onAddWater ? () => onAddWater(opt.amountMl) : undefined}
+            onPress={!isAddingWater && onAddWater ? () => onAddWater(opt.amountMl) : undefined}
+            disabled={isAddingWater}
             accessibilityRole="button"
             accessibilityLabel={opt.label}
-            style={({ pressed }) => [styles.quickButton, pressed && styles.pressed]}
+            accessibilityState={{ disabled: isAddingWater, busy: isAddingWater }}
+            style={({ pressed }) => [
+              styles.quickButton,
+              isAddingWater && styles.buttonDisabled,
+              pressed && !isAddingWater && styles.pressed,
+            ]}
           >
-            <Text style={styles.quickText}>{opt.label}</Text>
+            {isAddingWater ? (
+              <ActivityIndicator size="small" color={colors.teal} />
+            ) : (
+              <Text style={styles.quickText}>{opt.label}</Text>
+            )}
           </Pressable>
         ))}
         {onUndoWater ? (
           <Pressable
-            onPress={onUndoWater}
+            onPress={isUndoingWater ? undefined : onUndoWater}
+            disabled={isUndoingWater}
             accessibilityRole="button"
             accessibilityLabel={undoAccessibilityLabel}
-            style={({ pressed }) => [styles.undoButton, pressed && styles.pressed]}
+            accessibilityState={{ disabled: isUndoingWater, busy: isUndoingWater }}
+            style={({ pressed }) => [
+              styles.undoButton,
+              isUndoingWater && styles.buttonDisabled,
+              pressed && !isUndoingWater && styles.pressed,
+            ]}
           >
-            <Icon name="undo" size={17} color={colors.textSecondary} />
+            {isUndoingWater ? (
+              <ActivityIndicator size="small" color={colors.textSecondary} />
+            ) : (
+              <Icon name="undo" size={17} color={colors.textSecondary} />
+            )}
           </Pressable>
         ) : null}
       </View>
@@ -120,6 +147,7 @@ const styles = StyleSheet.create({
   },
   historyButton: { alignSelf: 'flex-end', marginTop: spacing.x2, minHeight: 32, justifyContent: 'center' },
   historyText: { ...typography.supporting, fontWeight: '600', color: colors.primary },
+  buttonDisabled: { opacity: 0.6 },
   pressed: { opacity: 0.8 },
 });
 

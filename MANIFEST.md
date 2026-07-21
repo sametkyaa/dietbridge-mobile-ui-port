@@ -1,15 +1,24 @@
 # MANIFEST
 
-- Olusturulma tarihi: 2026-07-21
-- Kaynak workspace yolu: C:\Users\drsam\Documents\Kimi\Workspaces\dietbridge_mobil
-- Toplam dosya sayisi: 168 (MANIFEST.md haric; MANIFEST dahil 169)
-- mobile-ui-port dosya sayisi: 98
-- JavaScript dosya sayisi: 96
-- Markdown dosya sayisi: 6 (+ MANIFEST.md)
-- Eklenen referans dosyalari: docs/DietBridge_Tasarim_Sistemi.md, docs/DietBridge_UI_Uygulama_Promptu_20260719.md, reference-showcase/src/dietbridge/ (63 .tsx + 1 .ts), reference-showcase/src/App.tsx, reference-showcase/src/index.css
-- Haric birakilan klasorler: node_modules/, dist/, .git/, package-lock.json, design_system/, dietbridge-showcase/ geri kalani
+- Olusturulma tarihi: 2026-07-21 (P1 sertleştirme güncellemesi: 2026-07-21, branch `kimi/p1-integration-hardening`)
+- Kaynak: Kimi çalışma alanındaki DietBridge showcase ve mobile-ui-port çıktısı
+- Toplam dosya sayisi: 176 (MANIFEST.md haric; MANIFEST dahil 177)
+- mobile-ui-port dosya sayisi: 98 (94 runtime JavaScript + 2 preview JavaScript + 2 Markdown)
+- Runtime JavaScript dosya sayisi: 94 (preview haric production .js)
+- Preview JavaScript dosya sayisi: 2 (PreviewGallery.js, previewData.js — production degil)
+- Dokümantasyon (Markdown) dosya sayisi: 6 (MANIFEST.md dahil; haric 5: kok README.md, mobile-ui-port/README.md, contracts/UI_CONTRACTS.md, docs/ altinda 2 referans)
+- Audit harness dosyalari (9): package.json, package-lock.json, app.json, babel.config.js, metro.config.js, index.js, App.js, scripts/audit-source.js, .github/workflows/ui-audit.yml (.gitignore bu branch'te güncellendi: dist-audit/ eklendi)
+- Eklenen referans dosyalari: docs/DietBridge_Tasarim_Sistemi.md, docs/DietBridge_UI_Uygulama_Promptu_20260719.md, reference-showcase/src/dietbridge/ (63 .tsx + 1 .ts), reference-showcase/src/App.tsx, reference-showcase/src/index.css (toplam 65)
+- Haric birakilan klasorler: node_modules/, dist/, dist-audit/, .git/, design_system/, dietbridge-showcase/ geri kalani
 - Secret taramasi sonucu: TEMIZ — .env, .pem, .key, credentials, service-account, supabase dosyasi yok; SUPABASE_URL, SUPABASE_ANON_KEY, SERVICE_ROLE, API_KEY, ACCESS_TOKEN, REFRESH_TOKEN, PRIVATE_KEY, Authorization, Bearer icerik kalibi bulunamadi
-- Kaynak dosyalarda degisiklik yapildi mi: HAYIR — mobile-ui-port/ kaynaklari birebir kopyalandi; yalnizca .gitignore, kok README.md ve MANIFEST.md yeni olusturuldu
+- Kaynak dosyalarda degisiklik yapildi mi: EVET — `kimi/p1-integration-hardening` branch'inde P1/P2 entegrasyon sertleştirmesi uygulandi (nested VirtualizedList kaldirildi, pending kilitleri eklendi, Icon.js @expo/vector-icons adapter'ina cevrildi, BottomSheetView klavye uyumu, profil/onboarding veri sozlesmeleri ayrildi, preview galerisi yeni durumlarla genisletildi). Degisikliklerin tam listesi icin: `git diff 4d70a3e --stat`. Audit harness dosyalari (kok package.json, App.js, scripts/, .github/) bu branch'te yeni olusturuldu.
+
+## Dogrulama ozeti (bu branch)
+
+- `npm run audit:source` — TEMIZ: production runtime'da web/backend kalintisi ve previewData importu yok (94 dosya tarandi)
+- `npm run audit:doctor` — expo-doctor 20/20 kontrol basarili
+- `npm run audit:android` / `npm run audit:ios` — expo export her iki platformda basarili (dist-audit/ ciktisi .gitignore'da)
+- CI: `.github/workflows/ui-audit.yml` push/PR'da `npm ci` + `npm run audit` calistirir
 
 ## mobile-ui-port/ kaynak dosya listesi
 

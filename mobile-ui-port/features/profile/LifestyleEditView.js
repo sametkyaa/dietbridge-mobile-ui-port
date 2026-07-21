@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '../../theme';
-import { AppButton, AppScreen, ChoiceChip } from '../../components';
+import { AppButton, AppInput, AppScreen, ChoiceChip } from '../../components';
 import { ProfileHeader } from './ProfileHeader';
 
 function SingleChipGroup({ label, options, selectedValue, onSelect, hint }) {
@@ -27,15 +27,19 @@ function SingleChipGroup({ label, options, selectedValue, onSelect, hint }) {
  * LifestyleEditView — ProfilDuzenleYasamTarzi port'u: aktivite, beslenme tipi,
  * uyku, sigara ve alkol; tekli seçim chip'leri, yargılamayan dil.
  *
- * Controlled form: values { activity, dietType, sleep, smoking, alcohol } +
+ * Controlled form: values { activity, dietType, sleepHours, smoking, alcohol } +
  * onFieldChange(key, value); options { activity: [...], dietType: [...],
- * sleep: [...], smoking: [...], alcohol: [...] } — [{ value, label }].
+ * smoking: [...], alcohol: [...] } — [{ value, label }].
+ *
+ * Uyku süresi chip DEĞİL sayısal AppInput'tur (decimal-pad); aralık
+ * doğrulaması UI'da yapılmaz, hata host'tan errors.sleepHours ile gelir.
  */
 export function LifestyleEditView({
   title = 'Yaşam tarzı',
   intro = 'Günlük ritmin, planının hayatına uymasına yardımcı olur. Bu bilgiler yalnızca planını kişiselleştirmek için kullanılır.',
   values = {},
   options = {},
+  errors = {},
   isSaving = false,
   saveLabel = 'Kaydet',
   cancelLabel = 'Vazgeç',
@@ -67,11 +71,15 @@ export function LifestyleEditView({
         selectedValue={values.dietType}
         onSelect={select('dietType')}
       />
-      <SingleChipGroup
-        label="Uyku düzeni"
-        options={options.sleep || []}
-        selectedValue={values.sleep}
-        onSelect={select('sleep')}
+      <AppInput
+        label="Uyku süresi"
+        value={values.sleepHours || ''}
+        onChangeText={select('sleepHours')}
+        placeholder="örn. 7,5"
+        keyboardType="decimal-pad"
+        error={errors.sleepHours}
+        hint={errors.sleepHours ? undefined : 'Gecelik ortalama uyku süreni saat olarak gir.'}
+        accessibilityLabel="Uyku süresi (saat)"
       />
       <SingleChipGroup
         label="Sigara kullanımı"

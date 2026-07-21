@@ -5,6 +5,8 @@ import { colors, radius, spacing } from '../theme';
 /**
  * AppCard — standart kart: Surface zemin, radius.card, 1px Border Soft kenarlık.
  * onPress verilirse Pressable ile sarılır (pressed'de hafif opaklık).
+ * contentStyle, kart tıklanabilir olsun ya da olmasın içerik sarmalayıcısına
+ * uygulanır.
  */
 export function AppCard({ children, style, onPress, accessibilityLabel, contentStyle }) {
   if (onPress) {
@@ -19,7 +21,11 @@ export function AppCard({ children, style, onPress, accessibilityLabel, contentS
       </Pressable>
     );
   }
-  return <View style={[styles.card, style]}>{children}</View>;
+  return (
+    <View style={[styles.card, style]}>
+      <View style={contentStyle}>{children}</View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

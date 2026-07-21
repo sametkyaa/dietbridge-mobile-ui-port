@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../../theme';
 import { AppButton, BottomSheetView, Icon, ProgressBar } from '../../components';
 
@@ -21,6 +21,11 @@ function toLitres(ml) {
  * currentMl/goalMl sayısal; litre metni bileşen içinde biçimlenir.
  * quickOptions: [{ id, amountMl, label }] — onAddWater(amountMl).
  * lastEntryLabel (örn. "250 ml eklendi") verilirse geri al satırı görünür.
+ *
+ * isAddingWater=true iken tüm hızlı ekleme düğmeleri kilitlenir (busy durumu
+ * erişilebilirliğe yansır); isUndoingWater=true iken geri al düğmesi
+ * kilitlenir. Callback aynı işlem sürerken tekrar çağrılmaz. Su state'i bu
+ * katmanda optimistic olarak değiştirilmez; host gerçek sonucu props ile gönderir.
  */
 export function WaterSheetView({
   visible,
@@ -28,6 +33,8 @@ export function WaterSheetView({
   goalMl = 0,
   quickOptions = DEFAULT_QUICK_OPTIONS,
   lastEntryLabel,
+  isAddingWater = false,
+  isUndoingWater = false,
   title = 'Su takibi',
   goalSuffix = 'hedef',
   undoLabel = 'Geri al',
@@ -58,12 +65,22 @@ export function WaterSheetView({
         {quickOptions.map((opt) => (
           <Pressable
             key={opt.id}
-            onPress={onAddWater ? () => onAddWater(opt.amountMl) : undefined}
+            onPress={!isAddingWater && onAddWater ? () => onAddWater(opt.amountMl) : undefined}
+            disabled={isAddingWater}
             accessibilityRole="button"
             accessibilityLabel={opt.label}
-            style={({ pressed }) => [styles.quickButton, pressed && styles.pressed]}
+            accessibilityState={{ disabled: isAddingWater, busy: isAddingWater }}
+            style={({ pressed }) => [
+              styles.quickButton,
+              isAddingWater && styles.buttonDisabled,
+              pressed && !isAddingWater && styles.pressed,
+            ]}
           >
-            <Text style={styles.quickText}>{opt.label}</Text>
+            {isAddingWater ? (
+              <ActivityIndicator size="small" color={colors.teal} />
+            ) : (
+              <Text style={styles.quickText}>{opt.label}</Text>
+            )}
           </Pressable>
         ))}
       </View>
@@ -75,13 +92,23 @@ export function WaterSheetView({
             {lastEntryLabel}
           </Text>
           <Pressable
-            onPress={onUndoWater}
+            onPress={isUndoingWater ? undefined : onUndoWater}
+            disabled={isUndoingWater}
             accessibilityRole="button"
             accessibilityLabel={undoLabel}
+            accessibilityState={{ disabled: isUndoingWater, busy: isUndoingWater }}
             hitSlop={8}
-            style={({ pressed }) => [styles.undoButton, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.undoButton,
+              isUndoingWater && styles.buttonDisabled,
+              pressed && !isUndoingWater && styles.pressed,
+            ]}
           >
-            <Icon name="undo" size={14} color={colors.textPrimary} accessible={false} />
+            {isUndoingWater ? (
+              <ActivityIndicator size="small" color={colors.textPrimary} />
+            ) : (
+              <Icon name="undo" size={14} color={colors.textPrimary} accessible={false} />
+            )}
             <Text style={styles.undoText}>{undoLabel}</Text>
           </Pressable>
         </View>
@@ -136,6 +163,7 @@ const styles = StyleSheet.create({
   undoText: { ...typography.supporting, fontWeight: '600', color: colors.textPrimary },
   historyButton: { alignSelf: 'center', minHeight: 44, justifyContent: 'center' },
   historyText: { ...typography.body, fontSize: 14, fontWeight: '600', color: colors.primary },
+  buttonDisabled: { opacity: 0.6 },
   pressed: { opacity: 0.8 },
 });
 

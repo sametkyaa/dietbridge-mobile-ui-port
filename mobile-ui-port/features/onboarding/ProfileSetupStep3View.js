@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../../theme';
-import { AppButton, AppScreen, ChoiceChip, Icon } from '../../components';
+import { AppButton, AppInput, AppScreen, ChoiceChip, Icon } from '../../components';
 import OnboardingHeader from './OnboardingHeader';
 import StepProgress from './StepProgress';
 
@@ -26,7 +26,9 @@ function ChipGroup({ label, options, selectedValue, onSelect }) {
 /**
  * ProfileSetupStep3View — ProfilTamamlama3.tsx port'u (Yaşam tarzı).
  *
- * activityOptions / dietTypeOptions / sleepOptions: [{ value, label }]
+ * activityOptions / dietTypeOptions: [{ value, label }]
+ * sleepHours: sayısal uyku süresi (saat) — decimal-pad AppInput; aralık
+ *   doğrulaması UI'da YAPILMAZ, hata host'tan sleepHoursError ile gelir.
  * waterGoalLabel: string (örn. "2,5") — stepper değeri; artır/azalt mantığı
  * host'ta kalır, bu görünüm yalnızca callback tetikler.
  */
@@ -35,15 +37,15 @@ export function ProfileSetupStep3View({
   selectedActivity = null,
   dietTypeOptions = [],
   selectedDietType = null,
-  sleepOptions = [],
-  selectedSleep = null,
+  sleepHours = '',
+  sleepHoursError,
   waterGoalLabel = '',
   waterGoalUnit = 'L',
   step = 3,
   totalSteps = 4,
   onSelectActivity,
   onSelectDietType,
-  onSelectSleep,
+  onSleepHoursChange,
   onDecreaseWaterGoal,
   onIncreaseWaterGoal,
   onBack,
@@ -75,11 +77,16 @@ export function ProfileSetupStep3View({
           selectedValue={selectedDietType}
           onSelect={onSelectDietType}
         />
-        <ChipGroup
+
+        <AppInput
           label="Uyku süresi"
-          options={sleepOptions}
-          selectedValue={selectedSleep}
-          onSelect={onSelectSleep}
+          value={sleepHours}
+          onChangeText={onSleepHoursChange}
+          placeholder="örn. 7,5"
+          keyboardType="decimal-pad"
+          error={sleepHoursError}
+          hint={sleepHoursError ? undefined : 'Gecelik ortalama uyku süreni saat olarak gir.'}
+          accessibilityLabel="Uyku süresi (saat)"
         />
 
         <View>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../../theme';
-import { AppButton, AppInput, AppScreen, InlineAlert } from '../../components';
+import { AppButton, AppInput, AppScreen, Icon, InlineAlert } from '../../components';
 import PasswordToggle from './PasswordToggle';
 
 /**
@@ -33,7 +33,7 @@ export function LoginView({
   return (
     <AppScreen scroll contentStyle={styles.content}>
       <View style={styles.logo} accessible={false} importantForAccessibility="no">
-        <Text style={styles.logoGlyph}>🌱</Text>
+        <Icon name="sprout" size={24} color={colors.white} />
       </View>
       <Text style={styles.title}>Tekrar hoş geldin</Text>
       <Text style={styles.subtitle}>Hesabına giriş yap, kaldığın yerden devam et.</Text>
@@ -45,6 +45,9 @@ export function LoginView({
           onChangeText={onEmailChange}
           error={emailError}
           keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="email"
           accessibilityLabel="E-posta"
         />
         <AppInput
@@ -53,6 +56,9 @@ export function LoginView({
           onChangeText={onPasswordChange}
           error={passwordError}
           secureTextEntry={!isPasswordVisible}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="password"
           accessibilityLabel="Şifre"
           rightAccessory={
             <PasswordToggle visible={isPasswordVisible} onToggle={onTogglePassword} />
@@ -116,7 +122,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoGlyph: { fontSize: 24, lineHeight: 30 },
   title: { ...typography.screenTitle, color: colors.textPrimary, marginTop: spacing.x5 },
   subtitle: {
     ...typography.supporting,

@@ -1,7 +1,7 @@
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../../theme';
-import { AppScreen, Icon } from '../../components';
+import { AppScreen, AppSkeleton, EmptyState, ErrorState, Icon } from '../../components';
 import { MessageBubble } from './MessageBubble';
 import { MessageComposer } from './MessageComposer';
 
@@ -40,11 +40,33 @@ function ChatHeader({ conversation, onBack }) {
   );
 }
 
+function ChatSkeleton() {
+  return (
+    <View style={styles.skeletonWrap}>
+      {[0, 1, 2, 3].map((i) => (
+        <View key={i} style={[styles.skeletonRow, i % 2 === 1 && styles.skeletonRowMine]}>
+          <AppSkeleton width="62%" height={44} borderRadius={radius.card} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 /**
  * ChatView — Sohbet port'u: başlık (diyetisyen adı/avatar/çevrimiçi durumu),
  * ters FlatList mesaj akışı, altta composer.
  *
  * SAF UI: realtime, gönderme servisi, görsel seçici entegrasyonu YOK.
+ *
+ * status:
+ * - 'loading' → mesaj iskeleti
+ * - 'ready'   → mesaj akışı
+ * - 'empty'   → sakin boş sohbet görünümü (composer kullanılabilir kalır)
+ * - 'error'   → ErrorState + onRetry
+ *
+ * Sayfalama: liste sonuna (görsel olarak üste, eski mesajlara) ulaşıldığında
+ * yalnız hasMore && !isLoadingMore iken onLoadMore çağrılır; listenin üstünde
+ * eski mesaj yükleme göstergesi görünür.
  *
  * conversation: { name, initials, statusLabel?, online? }
  * messages: [{ id, from: 'me'|'other', text?, imageUri?, caption?, timeLabel,
@@ -58,6 +80,13 @@ function ChatHeader({ conversation, onBack }) {
 export function ChatView({
   conversation,
   messages = [],
+  status = 'ready',
+  isLoadingMore = false,
+  hasMore = false,
+  errorTitle = 'Mesajlar yüklenemedi',
+  errorDescription = 'Bağlantını kontrol edip tekrar deneyebilirsin.',
+  emptyTitle = 'Henüz mesaj yok',
+  emptyDescription = 'Diyetisyenine ilk mesajını gönder; sorularını buradan yanıtlar.',
   composerValue = '',
   isSending = false,
   composerPlaceholder,
@@ -67,16 +96,37 @@ export function ChatView({
   onRetryMessage,
   onDeleteMessage,
   onPickImage,
+  onLoadMore,
+  onRetry,
 }) {
   // inverted FlatList için yeni → eski sıralaması
   const data = [...messages].reverse();
 
-  return (
-    <AppScreen
-      padTop
-      header={<ChatHeader conversation={conversation} onBack={onBack} />}
-      contentStyle={styles.content}
-    >
+  const listFooter =
+    isLoadingMore && hasMore ? (
+      <View style={styles.loadingMore} accessibilityLiveRegion="polite">
+        <ActivityIndicator size="small" color={colors.textSecondary} />
+        <Text style={styles.loadingMoreText}>Eski mesajlar yükleniyor…</Text>
+      </View>
+    ) : null;
+
+  let body;
+  if (status === 'loading') {
+    body = <ChatSkeleton />;
+  } else if (status === 'error') {
+    body = (
+      <View style={styles.stateWrap}>
+        <ErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
+      </View>
+    );
+  } else if (status === 'empty') {
+    body = (
+      <View style={styles.stateWrap}>
+        <EmptyState icon="message" title={emptyTitle} description={emptyDescription} />
+      </View>
+    );
+  } else {
+    body = (
       <FlatList
         data={data}
         keyExtractor={(item) => item.id}
@@ -84,6 +134,11 @@ export function ChatView({
         showsVerticalScrollIndicator={false}
         style={styles.list}
         contentContainerStyle={styles.listContent}
+        onEndReachedThreshold={0.3}
+        onEndReached={
+          hasMore && !isLoadingMore && onLoadMore ? onLoadMore : undefined
+        }
+        ListFooterComponent={listFooter}
         renderItem={({ item }) => (
           <View style={styles.messageWrap}>
             {item.dateLabel ? (
@@ -99,6 +154,16 @@ export function ChatView({
           </View>
         )}
       />
+    );
+  }
+
+  return (
+    <AppScreen
+      padTop
+      header={<ChatHeader conversation={conversation} onBack={onBack} />}
+      contentStyle={styles.content}
+    >
+      {body}
       <MessageComposer
         value={composerValue}
         onChangeText={onComposerChange}
@@ -160,6 +225,18 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.x1,
     overflow: 'hidden',
   },
+  stateWrap: { flex: 1 },
+  skeletonWrap: { flex: 1, paddingHorizontal: spacing.x4, paddingTop: spacing.x4, gap: spacing.x3 },
+  skeletonRow: { alignItems: 'flex-start' },
+  skeletonRowMine: { alignItems: 'flex-end' },
+  loadingMore: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.x2,
+    paddingVertical: spacing.x3,
+  },
+  loadingMoreText: { ...typography.caption, color: colors.textSecondary },
   pressed: { opacity: 0.6 },
 });
 

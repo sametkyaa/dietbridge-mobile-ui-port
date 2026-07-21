@@ -34,11 +34,15 @@ function Stepper({ valueLabel, unit, onDecrease, onIncrease, decreaseLabel, incr
 }
 
 /**
- * GoalEditView — ProfilDuzenleHedef port'u: boy/kilolar, hedef seçimi,
+ * GoalEditView — ProfilDuzenleHedef port'u: boy, hedef kilo, hedef seçimi,
  * günlük su hedefi (stepper), vücut ölçüsü hedefleri. Yargılamayan dil.
  *
- * Controlled form: values { heightCm, currentWeightKg, targetWeightKg, goal,
- * waterGoalLabel, waistCm, hipCm, chestCm, armCm } + onFieldChange(key, v);
+ * MEVCUT KİLO BU FORMDA YÖNETİLMEZ: currentWeightKg alanı kaldırılmıştır.
+ * Mevcut kilo değişikliği ayrı ölçüm akışından geçer (ProgressView +
+ * AddWeightSheetView); generic profil onSave'i kilo güncellemesi içermez.
+ *
+ * Controlled form: values { heightCm, targetWeightKg, goal, waterGoalLabel,
+ * waistCm, hipCm, chestCm, armCm } + onFieldChange(key, v);
  * goalOptions [{ value, label }] + onFieldChange('goal', v) tekli seçim.
  * Su hedefi stepper'ı onDecreaseWaterGoal / onIncreaseWaterGoal ile sürülür
  * (adım miktarı host'ta; değer waterGoalLabel olarak hazır gelir).
@@ -80,22 +84,18 @@ export function GoalEditView({
           style={styles.halfField}
         />
         <AppInput
-          label="Mevcut kilo (kg)"
-          value={values.currentWeightKg || ''}
-          onChangeText={change('currentWeightKg')}
+          label="Hedef kilo (kg)"
+          value={values.targetWeightKg || ''}
+          onChangeText={change('targetWeightKg')}
           keyboardType="decimal-pad"
-          error={errors.currentWeightKg}
+          error={errors.targetWeightKg}
           style={styles.halfField}
         />
       </View>
-      <AppInput
-        label="Hedef kilo (kg)"
-        value={values.targetWeightKg || ''}
-        onChangeText={change('targetWeightKg')}
-        keyboardType="decimal-pad"
-        error={errors.targetWeightKg}
-        hint={errors.targetWeightKg ? undefined : 'Hedef kilonu diyetisyeninle birlikte belirlemen önerilir.'}
-      />
+      <Text style={styles.hint}>
+        Hedef kilonu diyetisyeninle birlikte belirlemen önerilir. Mevcut kilonu İlerleme
+        ekranından kaydedebilirsin.
+      </Text>
 
       <View>
         <Text style={styles.groupLabel}>Hedefin</Text>

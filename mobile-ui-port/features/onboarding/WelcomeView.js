@@ -35,7 +35,7 @@ export function WelcomeView({
           {nextMeal ? (
             <View style={styles.mealRow}>
               <View style={styles.mealIcon} accessible={false} importantForAccessibility="no">
-                <Text style={styles.mealIconGlyph}>🥗</Text>
+                <Icon name="meal" size={22} color={colors.primaryDark} />
               </View>
               <View style={styles.mealText}>
                 <View style={styles.mealTimeRow}>
@@ -112,7 +112,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mealIconGlyph: { fontSize: 22, lineHeight: 26 },
   mealText: { flex: 1, minWidth: 0 },
   mealTimeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.x1 + 2 },
   mealTime: { ...typography.caption, color: colors.textSecondary },

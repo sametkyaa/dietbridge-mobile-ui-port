@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, shadows, spacing, typography } from '../../theme';
-import { AppScreen } from '../../components';
+import { AppScreen, Icon } from '../../components';
 
 /**
  * SplashView — Splash.tsx port'u. Ortalanmış logo, sakin yükleme göstergesi
@@ -34,7 +34,7 @@ export function SplashView({
   return (
     <AppScreen backgroundColor={colors.primarySurface} contentStyle={styles.content}>
       <View style={styles.logo} accessible={false} importantForAccessibility="no">
-        <Text style={styles.logoGlyph}>🌱</Text>
+        <Icon name="sprout" size={40} color={colors.white} />
       </View>
       <Text style={styles.appName}>{appName}</Text>
       <Text style={styles.tagline}>{tagline}</Text>
@@ -66,7 +66,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadows.card,
   },
-  logoGlyph: { fontSize: 40, lineHeight: 48 },
   appName: { ...typography.screenTitle, color: colors.primaryDark, marginTop: spacing.x5 },
   tagline: { ...typography.supporting, color: colors.textSecondary, marginTop: spacing.x1 + 2 },
   dots: { flexDirection: 'row', gap: spacing.x2, marginTop: spacing.x10 },
