@@ -36,53 +36,63 @@ export function MealThumb({ icon = 'hourglass', size = 44, tone = 'green', style
 /**
  * MealListItem — ortak öğün satırı (Ana Sayfa "Günün öğünleri" ve Planım
  * listesi). Sol thumb, ortada saat·tür + başlık, sağda StatusBadge ve
- * tamamla/geri al dairesi. Satır basışı onPress(meal.id), daire basışı
- * onToggle(meal.id) çağırır.
+ * tamamla/geri al dairesi.
+ *
+ * Satır iki KARDEŞ tıklanabilir alandan oluşur (iç içe Pressable YOK):
+ * - detay alanı (thumb + metin): onPress(meal.id)
+ * - tamamla/geri al dairesi: onToggle(meal.id)
+ *
+ * isUpdating=true iken toggle düğmesi devre dışı kalır, busy durumu
+ * erişilebilirliğe yansır ve callback tekrar çağrılmaz (çift işlem koruması).
  *
  * meal: { id, time, type, title, status, icon?, badgeLabel? }
  */
-export function MealListItem({ meal, onPress, onToggle, style }) {
+export function MealListItem({ meal, onPress, onToggle, isUpdating = false, style }) {
   const done = meal.status === 'completed';
   const badgeStatus = ['completed', 'upcoming', 'waiting', 'delayed'].includes(meal.status)
     ? meal.status
     : 'info';
 
   return (
-    <Pressable
-      onPress={onPress ? () => onPress(meal.id) : undefined}
-      accessibilityRole="button"
-      accessibilityLabel={`${meal.time} ${meal.type}, ${meal.title}`}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed, style]}
-    >
-      <MealThumb icon={meal.icon} size={44} tone={done ? 'muted' : 'green'} />
-      <View style={styles.textWrap}>
-        <Text style={[styles.meta, done && styles.metaDone]} numberOfLines={1}>
-          {meal.time} · {meal.type}
-        </Text>
-        <Text style={[styles.title, done && styles.titleDone]} numberOfLines={2}>
-          {meal.title}
-        </Text>
-      </View>
+    <View style={[styles.row, style]}>
+      <Pressable
+        onPress={onPress ? () => onPress(meal.id) : undefined}
+        accessibilityRole="button"
+        accessibilityLabel={`${meal.time} ${meal.type}, ${meal.title}`}
+        style={({ pressed }) => [styles.detailArea, pressed && styles.pressed]}
+      >
+        <MealThumb icon={meal.icon} size={44} tone={done ? 'muted' : 'green'} />
+        <View style={styles.textWrap}>
+          <Text style={[styles.meta, done && styles.metaDone]} numberOfLines={1}>
+            {meal.time} · {meal.type}
+          </Text>
+          <Text style={[styles.title, done && styles.titleDone]} numberOfLines={2}>
+            {meal.title}
+          </Text>
+        </View>
+      </Pressable>
       <View style={styles.trailing}>
         <StatusBadge status={badgeStatus} label={meal.badgeLabel} />
         {onToggle ? (
           <Pressable
-            onPress={() => onToggle(meal.id)}
+            onPress={isUpdating ? undefined : () => onToggle(meal.id)}
+            disabled={isUpdating}
             accessibilityRole="button"
             accessibilityLabel={done ? 'Geri al' : 'Öğünü yedim'}
-            accessibilityState={{ checked: done }}
+            accessibilityState={{ checked: done, disabled: isUpdating, busy: isUpdating }}
             hitSlop={8}
             style={({ pressed }) => [
               styles.toggle,
               done ? styles.toggleDone : styles.togglePending,
-              pressed && styles.pressed,
+              isUpdating && styles.toggleDisabled,
+              pressed && !isUpdating && styles.pressed,
             ]}
           >
             {done ? <Icon name="check" size={15} color={colors.white} /> : null}
           </Pressable>
         ) : null}
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -100,9 +110,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.x3,
     paddingHorizontal: spacing.x4,
     paddingVertical: spacing.x3 + 2,
+  },
+  detailArea: {
+    flex: 1,
+    flexShrink: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.x3,
+    minHeight: 44,
   },
   pressed: { opacity: 0.85 },
   textWrap: { flex: 1, flexShrink: 1, gap: 2 },
@@ -124,6 +141,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.borderSoft,
   },
+  toggleDisabled: { opacity: 0.5 },
 });
 
 export default MealListItem;

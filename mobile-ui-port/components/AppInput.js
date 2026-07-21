@@ -5,6 +5,12 @@ import { colors, radius, spacing, typography } from '../theme';
 /**
  * AppInput — label her zaman görünür; hata: Error border + alanla ilişkili hata metni.
  * rightAccessory: örn. şifre göster/gizle butonu (host app sağlar, 44px dokunma alanı).
+ *
+ * Standart TextInput prop'ları (autoCapitalize, autoCorrect, autoComplete,
+ * textContentType, maxLength, returnKeyType, onSubmitEditing, blurOnSubmit,
+ * inputMode, testID, enterKeyHint vb.) desteklenir ve TextInput'a iletilir;
+ * tanımlanmayan güvenli TextInput prop'ları ...textInputProps ile geçer.
+ * value, onChangeText ve style gibi kontrollü temel prop'lar açıkça yönetilir.
  */
 export function AppInput({
   label,
@@ -23,6 +29,7 @@ export function AppInput({
   inputStyle,
   accessibilityLabel,
   multiline = false,
+  ...textInputProps
 }) {
   const [focused, setFocused] = useState(false);
 
@@ -57,6 +64,7 @@ export function AppInput({
             if (onBlur) onBlur(e);
           }}
           style={[styles.input, multiline && styles.inputMultiline, inputStyle]}
+          {...textInputProps}
         />
         {rightAccessory}
       </View>

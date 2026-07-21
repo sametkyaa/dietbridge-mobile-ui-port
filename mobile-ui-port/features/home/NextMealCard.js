@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../../theme';
 import { AppButton, AppCard, EmptyState, Icon, StatusBadge } from '../../components';
 import { MealThumb } from '../meal-plan/MealListItem';
@@ -15,6 +15,10 @@ import { MealThumb } from '../meal-plan/MealListItem';
  *
  * meal: { time, type, title, icon? } · badgeLabel örn. "45 dk sonra" /
  * "Tamamlandı · 13:38" · summary kısa içerik özeti.
+ *
+ * isUpdating=true iken "Öğünü yedim" butonu spinner'a geçer ve devre dışı
+ * kalır; tamamlandı durumundaki "Geri al" butonu da kilitlenir (çift işlem
+ * koruması). Callback işlem sürerken tekrar çağrılmaz.
  */
 export function NextMealCard({
   state = 'upcoming',
@@ -31,6 +35,7 @@ export function NextMealCard({
   noMealTitle = 'Bugün için planlanmış öğün bulunmuyor',
   noMealDescription = 'Diyetisyenin yeni bir plan eklediğinde burada görünür.',
   noMealActionLabel = 'Haftalık plana bak',
+  isUpdating = false,
   onMarkEaten,
   onUndo,
   onOpenPlan,
@@ -104,13 +109,23 @@ export function NextMealCard({
           </View>
           {onUndo ? (
             <Pressable
-              onPress={onUndo}
+              onPress={isUpdating ? undefined : onUndo}
+              disabled={isUpdating}
               accessibilityRole="button"
               accessibilityLabel={undoLabel}
+              accessibilityState={{ disabled: isUpdating, busy: isUpdating }}
               hitSlop={8}
-              style={({ pressed }) => [styles.undoButton, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.undoButton,
+                isUpdating && styles.undoDisabled,
+                pressed && !isUpdating && styles.pressed,
+              ]}
             >
-              <Icon name="undo" size={14} color={colors.textSecondary} accessible={false} />
+              {isUpdating ? (
+                <ActivityIndicator size="small" color={colors.textSecondary} />
+              ) : (
+                <Icon name="undo" size={14} color={colors.textSecondary} accessible={false} />
+              )}
               <Text style={styles.undoText}>{undoLabel}</Text>
             </Pressable>
           ) : null}
@@ -120,6 +135,8 @@ export function NextMealCard({
           variant="primary"
           label={markEatenLabel}
           onPress={onMarkEaten}
+          loading={isUpdating}
+          disabled={isUpdating}
           icon={<Icon name="check" size={18} color={colors.white} accessible={false} />}
           style={styles.action}
         />
@@ -168,6 +185,7 @@ const styles = StyleSheet.create({
     gap: spacing.x1 + 2,
   },
   undoText: { ...typography.supporting, fontWeight: '600', color: colors.textSecondary },
+  undoDisabled: { opacity: 0.6 },
   pressed: { opacity: 0.8 },
   dayDoneRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.x4 },
   dayDoneIcon: {

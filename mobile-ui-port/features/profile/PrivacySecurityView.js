@@ -41,6 +41,11 @@ function ActionRow({ icon, label, description, onPress, destructive = false, isL
  *
  * Tüm aksiyonlar saf callback'tir; iki adımlı doğrulama controlled Switch'tir
  * (twoFactorEnabled + onToggleTwoFactor). Hesap silme destructive tonda.
+ *
+ * Görünürlük flag'leri: showTwoFactor / showSessions / showDataExport /
+ * showDeleteAccount — varsayılan FALSE. Gerçek backend hazır olmayan özellik
+ * satırları production'da GÖSTERİLMEMELİDİR; host bu flag'leri özellik
+ * hazır olduğunda açar. Şifre değiştirme satırı her zaman görünür.
  */
 export function PrivacySecurityView({
   title = 'Gizlilik ve güvenlik',
@@ -51,6 +56,10 @@ export function PrivacySecurityView({
   twoFactorDescription = 'Girişte ek doğrulama kodu',
   sessionSummary,
   deleteDescription = 'Hesabın ve tüm verilerin kalıcı olarak silinir; bu işlem geri alınamaz.',
+  showTwoFactor = false,
+  showSessions = false,
+  showDataExport = false,
+  showDeleteAccount = false,
   onToggleTwoFactor,
   onChangePassword,
   onOpenSessions,
@@ -72,62 +81,71 @@ export function PrivacySecurityView({
             icon="key"
             label="Şifreyi değiştir"
             onPress={onChangePassword}
+            isLast={!showTwoFactor && !showSessions}
           />
-          <View style={[styles.row, styles.rowBorder]}>
-            <View style={styles.iconWrap} accessible={false} importantForAccessibility="no">
-              <Icon name="shield" size={17} color={colors.textSecondary} />
+          {showTwoFactor ? (
+            <View style={[styles.row, styles.rowBorder]}>
+              <View style={styles.iconWrap} accessible={false} importantForAccessibility="no">
+                <Icon name="shield" size={17} color={colors.textSecondary} />
+              </View>
+              <View style={styles.rowTextCol}>
+                <Text style={styles.rowLabel}>İki adımlı doğrulama</Text>
+                <Text style={styles.rowDescription}>{twoFactorDescription}</Text>
+              </View>
+              <Switch
+                value={twoFactorEnabled}
+                onValueChange={onToggleTwoFactor}
+                trackColor={{ false: colors.borderSoft, true: colors.primarySoft }}
+                thumbColor={twoFactorEnabled ? colors.primary : colors.white}
+                ios_backgroundColor={colors.borderSoft}
+                accessibilityLabel="İki adımlı doğrulama"
+                accessibilityRole="switch"
+                accessibilityState={{ checked: twoFactorEnabled }}
+              />
             </View>
-            <View style={styles.rowTextCol}>
-              <Text style={styles.rowLabel}>İki adımlı doğrulama</Text>
-              <Text style={styles.rowDescription}>{twoFactorDescription}</Text>
-            </View>
-            <Switch
-              value={twoFactorEnabled}
-              onValueChange={onToggleTwoFactor}
-              trackColor={{ false: colors.borderSoft, true: colors.primarySoft }}
-              thumbColor={twoFactorEnabled ? colors.primary : colors.white}
-              ios_backgroundColor={colors.borderSoft}
-              accessibilityLabel="İki adımlı doğrulama"
-              accessibilityRole="switch"
-              accessibilityState={{ checked: twoFactorEnabled }}
+          ) : null}
+          {showSessions ? (
+            <ActionRow
+              icon="devices"
+              label="Açık oturumlar"
+              description={sessionSummary}
+              onPress={onOpenSessions}
+              isLast
             />
-          </View>
-          <ActionRow
-            icon="devices"
-            label="Açık oturumlar"
-            description={sessionSummary}
-            onPress={onOpenSessions}
-            isLast
-          />
+          ) : null}
         </AppCard>
       </View>
 
-      <View>
-        <Text style={styles.sectionTitle}>{dataLabel}</Text>
-        <AppCard style={styles.card}>
-          <ActionRow
-            icon="download"
-            label="Verilerimi indir"
-            description="Tüm kayıtlarının bir kopyası"
-            onPress={onExportData}
-            isLast
-          />
-        </AppCard>
-      </View>
+      {showDataExport ? (
+        <View>
+          <Text style={styles.sectionTitle}>{dataLabel}</Text>
+          <AppCard style={styles.card}>
+            <ActionRow
+              icon="download"
+              label="Verilerimi indir"
+              description="Tüm kayıtlarının bir kopyası"
+              onPress={onExportData}
+              isLast
+            />
+          </AppCard>
+        </View>
+      ) : null}
 
-      <View>
-        <Text style={styles.sectionTitle}>{accountLabel}</Text>
-        <AppCard style={styles.card}>
-          <ActionRow
-            icon="trash"
-            label="Hesabı sil"
-            description={deleteDescription}
-            onPress={onDeleteAccount}
-            destructive
-            isLast
-          />
-        </AppCard>
-      </View>
+      {showDeleteAccount ? (
+        <View>
+          <Text style={styles.sectionTitle}>{accountLabel}</Text>
+          <AppCard style={styles.card}>
+            <ActionRow
+              icon="trash"
+              label="Hesabı sil"
+              description={deleteDescription}
+              onPress={onDeleteAccount}
+              destructive
+              isLast
+            />
+          </AppCard>
+        </View>
+      ) : null}
     </AppScreen>
   );
 }

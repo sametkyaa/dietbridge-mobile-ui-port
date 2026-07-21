@@ -38,6 +38,13 @@ import { OfflineBanner } from './OfflineBanner';
  * ilgili durum; aksi hâlde 'upcoming'.
  *
  * onRefresh verilirse RefreshControl bağlanır (refreshing prop'u ile).
+ *
+ * Pending kilitleri (host'tan gelir; çift işlem koruması):
+ * - updatingMealId: toggle'ı süren öğünün id'si — ilgili MealListItem ve
+ *   (aynı öğünse) NextMealCard kilitlenir
+ * - isMealUpdating: hero kart "Öğünü yedim"/"Geri al" işlemi sürüyor
+ * - isAddingWater: hızlı su ekleme düğmeleri kilitli
+ * - isUndoingWater: su geri alma düğmesi kilitli
  */
 export function HomeView({
   status = 'ready',
@@ -54,6 +61,10 @@ export function HomeView({
   dietitianMessage,
   dayCompletion,
   refreshing = false,
+  updatingMealId = null,
+  isMealUpdating = false,
+  isAddingWater = false,
+  isUndoingWater = false,
   onNotificationPress,
   onAvatarPress,
   onMealPress,
@@ -101,11 +112,16 @@ export function HomeView({
       goalLabel={water.goalLabel}
       percent={water.percent}
       quickOptions={water.quickOptions}
+      isAddingWater={isAddingWater}
+      isUndoingWater={isUndoingWater}
       onAddWater={onAddWater}
       onUndoWater={onUndoWater}
       onOpenHistory={onOpenWaterHistory}
     />
   ) : null;
+
+  const nextMealUpdating =
+    isMealUpdating || (nextMeal != null && updatingMealId === nextMeal.id);
 
   return (
     <AppScreen
@@ -148,12 +164,18 @@ export function HomeView({
               badgeLabel={nextMeal?.badgeLabel}
               dayCompletedTitle={dayCompletion?.title}
               dayCompletedDescription={dayCompletion?.description}
+              isUpdating={nextMealUpdating}
               onMarkEaten={nextMeal ? () => onToggleMeal?.(nextMeal.id) : undefined}
               onUndo={nextMeal ? () => onUndoMeal?.(nextMeal.id) : undefined}
               onOpenPlan={onOpenPlan}
             />
             {waterCard}
-            <TodayMealsList meals={meals} onMealPress={onMealPress} onToggleMeal={onToggleMeal} />
+            <TodayMealsList
+              meals={meals}
+              updatingMealId={updatingMealId}
+              onMealPress={onMealPress}
+              onToggleMeal={onToggleMeal}
+            />
             <DietitianMessageCard message={dietitianMessage} onReply={onOpenMessages} />
           </>
         )}

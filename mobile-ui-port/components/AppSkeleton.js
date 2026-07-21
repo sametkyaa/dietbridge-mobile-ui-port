@@ -6,6 +6,12 @@ import { colors, radius, spacing } from '../theme';
  * AppSkeleton — Surface Muted placeholder bloklar.
  * Saf UI: timer/otomatik geçiş YOK. animated=true verilirse hafif opaklık
  * döngüsü (shimmer yerine) uygulanır; varsayılan kapalıdır.
+ *
+ * animatedValue: opsiyonel paylaşılan Animated.Value. Verilirse bu blok kendi
+ * animasyon döngüsünü BAŞLATMAZ; üst bileşenin tek ortak döngüsüne katılır.
+ * Böylece aynı ekranda onlarca eşzamanlı animation loop oluşmaz
+ * (örn. HomeSkeleton). Döngünün başlatılması/durdurulması üst bileşenin
+ * sorumluluğundadır.
  */
 export function AppSkeleton({
   width = '100%',
@@ -13,28 +19,32 @@ export function AppSkeleton({
   borderRadius = radius.small,
   lines = 0,
   animated = false,
+  animatedValue,
   style,
 }) {
-  const opacity = useRef(new Animated.Value(1)).current;
+  const ownOpacity = useRef(new Animated.Value(1)).current;
+  const shared = !!animatedValue;
+  const opacity = shared ? animatedValue : ownOpacity;
 
   useEffect(() => {
-    if (!animated) return undefined;
+    if (!animated || shared) return undefined;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.5, duration: 700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(ownOpacity, { toValue: 0.5, duration: 700, useNativeDriver: true }),
+        Animated.timing(ownOpacity, { toValue: 1, duration: 700, useNativeDriver: true }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [animated, opacity]);
+  }, [animated, shared, ownOpacity]);
 
   const blockStyle = [styles.block, { width, height, borderRadius }, style];
+  const effectiveOpacity = animated || shared ? opacity : 1;
 
   if (lines > 1) {
     return (
       <View style={styles.linesWrap}>
-        {Array.from({ length: lines }).map((_, i) => (
+        {[...Array(lines)].map((_, i) => (
           <Animated.View
             key={i}
             style={[
@@ -43,7 +53,7 @@ export function AppSkeleton({
                 width: i === lines - 1 ? '70%' : width,
                 height,
                 borderRadius,
-                opacity: animated ? opacity : 1,
+                opacity: effectiveOpacity,
               },
               style,
             ]}
@@ -53,7 +63,7 @@ export function AppSkeleton({
     );
   }
 
-  return <Animated.View style={[...blockStyle, { opacity: animated ? opacity : 1 }]} />;
+  return <Animated.View style={[...blockStyle, { opacity: effectiveOpacity }]} />;
 }
 
 /** Kart görünümlü hazır skeleton preset'i. */

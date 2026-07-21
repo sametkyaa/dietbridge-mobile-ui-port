@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../../theme';
 import {
   AppButton,
@@ -58,11 +58,15 @@ function DetailSkeleton() {
  * status: 'loading' | 'ready' | 'error'
  * completionState: 'pending' | 'completed'
  * completedBadgeLabel: örn. "Tamamlandı · 13:38"
+ * isCompletionUpdating: true iken tamamlama/geri alma butonları kilitlenir
+ * (busy durumu erişilebilirliğe yansır; ana CTA spinner gösterir) — çift işlem
+ * koruması. Callback işlem sürerken tekrar çağrılmaz.
  */
 export function MealDetailView({
   meal,
   status = 'ready',
   completionState = 'pending',
+  isCompletionUpdating = false,
   title = 'Öğün detayı',
   completedBadgeLabel,
   markEatenLabel = 'Öğünü yedim',
@@ -215,19 +219,35 @@ export function MealDetailView({
               </View>
               {onToggleComplete ? (
                 <Pressable
-                  onPress={onToggleComplete}
+                  onPress={isCompletionUpdating ? undefined : onToggleComplete}
+                  disabled={isCompletionUpdating}
                   accessibilityRole="button"
                   accessibilityLabel={undoLabel}
+                  accessibilityState={{ disabled: isCompletionUpdating, busy: isCompletionUpdating }}
                   hitSlop={8}
-                  style={({ pressed }) => [styles.undoButton, pressed && styles.pressed]}
+                  style={({ pressed }) => [
+                    styles.undoButton,
+                    isCompletionUpdating && styles.undoDisabled,
+                    pressed && !isCompletionUpdating && styles.pressed,
+                  ]}
                 >
-                  <Icon name="undo" size={15} color={colors.textSecondary} accessible={false} />
+                  {isCompletionUpdating ? (
+                    <ActivityIndicator size="small" color={colors.textSecondary} />
+                  ) : (
+                    <Icon name="undo" size={15} color={colors.textSecondary} accessible={false} />
+                  )}
                   <Text style={styles.undoText}>{undoLabel}</Text>
                 </Pressable>
               ) : null}
             </>
           ) : (
-            <AppButton variant="primary" label={markEatenLabel} onPress={onToggleComplete} />
+            <AppButton
+              variant="primary"
+              label={markEatenLabel}
+              onPress={onToggleComplete}
+              loading={isCompletionUpdating}
+              disabled={isCompletionUpdating}
+            />
           )}
         </View>
       </View>
@@ -332,6 +352,7 @@ const styles = StyleSheet.create({
     gap: spacing.x1 + 2,
   },
   undoText: { ...typography.body, fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+  undoDisabled: { opacity: 0.6 },
   pressed: { opacity: 0.8 },
   skeletonWrap: { paddingTop: spacing.x4 },
   skeletonGap: { marginTop: spacing.x4 },

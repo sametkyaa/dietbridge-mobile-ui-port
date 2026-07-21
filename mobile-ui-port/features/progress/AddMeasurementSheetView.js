@@ -31,6 +31,7 @@ export function AddMeasurementSheetView({
       visible={visible}
       onClose={onClose}
       title={title}
+      scrollable
       footer={
         <AppButton variant="primary" label={saveLabel} loading={isSaving} onPress={onSave} />
       }

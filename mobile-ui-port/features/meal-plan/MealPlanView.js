@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '../../theme';
-import { AppCard, AppScreen, AppSkeleton, EmptyState, InlineAlert } from '../../components';
+import { AppCard, AppScreen, AppSkeleton, EmptyState, ErrorState, InlineAlert } from '../../components';
 import { WeekHeader } from './WeekHeader';
 import { DayStrip } from './DayStrip';
 import { MealListItem } from './MealListItem';
@@ -26,14 +26,18 @@ function PlanSkeleton() {
 /**
  * MealPlanView — Planım (HaftalikPlan + BosGun + Guncellendi tek görünümde).
  *
- * status: 'loading' | 'ready' | 'empty'
+ * status: 'loading' | 'ready' | 'empty' | 'error'
  * - 'empty' → haftanın hiçbir gününde plan yok (tam sayfa empty state)
+ * - 'error' → ErrorState (onRetry ile); errorTitle/errorDescription özelleştirilebilir
  * - seçili günde öğün yoksa gün listesi yerine kart içi empty state
  *
  * days: [{ id, dayLabel, dateLabel, isToday?, isCompleted? }]
  * meals: seçili günün öğünleri (MealListItem formatı)
  * showUpdatedNotice=true iken plan güncellendi bilgi şeridi gösterilir
  * (updatedMessage veya planUpdatedAt ile).
+ *
+ * updatingMealId: işlemi süren öğünün id'si — yalnız o satırın toggle'ı
+ * kilitlenir (çift işlem koruması); diğer öğünler kullanılabilir kalır.
  *
  * onBack: host navigasyon başlığına bağlanmak için ayrılmıştır; bu görünüm
  * kendi geri düğmesini çizmez (sekme kök ekranıdır).
@@ -54,6 +58,9 @@ export function MealPlanView({
   emptyDescription = 'Diyetisyenin bu günü henüz planlamamış olabilir; hazır olduğunda burada görünecek.',
   weekEmptyTitle = 'Bu hafta için plan yok',
   weekEmptyDescription = 'Diyetisyenin haftalık planı oluşturduğunda burada görünecek.',
+  errorTitle = 'Plan yüklenemedi',
+  errorDescription = 'Bağlantını kontrol edip tekrar deneyebilirsin.',
+  updatingMealId = null,
   onSelectDay,
   onPreviousWeek,
   onNextWeek,
@@ -61,6 +68,7 @@ export function MealPlanView({
   onMealPress,
   onToggleMeal,
   onBack,
+  onRetry,
   onRefresh,
   refreshing = false,
 }) {
@@ -88,6 +96,14 @@ export function MealPlanView({
     return (
       <AppScreen padTop>
         <PlanSkeleton />
+      </AppScreen>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <AppScreen padTop>
+        <ErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
       </AppScreen>
     );
   }
@@ -123,7 +139,12 @@ export function MealPlanView({
           ) : undefined
         }
         renderItem={({ item }) => (
-          <MealListItem meal={item} onPress={onMealPress} onToggle={onToggleMeal} />
+          <MealListItem
+            meal={item}
+            isUpdating={updatingMealId === item.id}
+            onPress={onMealPress}
+            onToggle={onToggleMeal}
+          />
         )}
         ListEmptyComponent={
           <AppCard style={styles.emptyCard}>
