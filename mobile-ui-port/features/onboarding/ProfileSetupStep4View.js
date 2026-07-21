@@ -5,7 +5,26 @@ import { AppButton, AppInput, AppScreen, ChoiceChip, Icon } from '../../componen
 import OnboardingHeader from './OnboardingHeader';
 import StepProgress from './StepProgress';
 
-function MultiChipGroup({ label, options, selectedValues, onToggle }) {
+function SingleChipGroup({ label, options, selectedValue, onSelect, hint }) {
+  return (
+    <View>
+      <Text style={styles.groupLabel}>{label}</Text>
+      <View style={styles.chips}>
+        {options.map((opt) => (
+          <ChoiceChip
+            key={opt.value}
+            label={opt.label}
+            selected={selectedValue === opt.value}
+            onPress={onSelect ? () => onSelect(opt.value) : undefined}
+          />
+        ))}
+      </View>
+      {hint ? <Text style={styles.note}>{hint}</Text> : null}
+    </View>
+  );
+}
+
+function MultiChipGroup({ label, options, selectedValues, onToggle, onAddCustom, addCustomLabel, hint }) {
   return (
     <View>
       <Text style={styles.groupLabel}>{label}</Text>
@@ -21,34 +40,77 @@ function MultiChipGroup({ label, options, selectedValues, onToggle }) {
             />
           );
         })}
+        {onAddCustom ? (
+          <Pressable
+            onPress={onAddCustom}
+            accessibilityRole="button"
+            accessibilityLabel={addCustomLabel || 'Özel ekle'}
+            hitSlop={4}
+            style={({ pressed }) => [styles.customAdd, pressed && styles.pressed]}
+          >
+            <Icon name="plus" size={14} color={colors.textSecondary} accessible={false} />
+            <Text style={styles.customAddText}>{addCustomLabel || 'Özel ekle'}</Text>
+          </Pressable>
+        ) : null}
       </View>
+      {hint ? <Text style={styles.note}>{hint}</Text> : null}
     </View>
   );
 }
 
 /**
  * ProfileSetupStep4View — ProfilTamamlama4.tsx port'u (Sağlık ve beslenme).
- * Çoklu seçim grupları: kronik rahatsızlıklar, intoleranslar, sevilmeyen
- * besinler. Yargılamayan dil; alanlar boş bırakılabilir.
+ * DietBridge mobil veri kapsamındaki tüm sağlık alanları:
  *
- * conditionOptions / intoleranceOptions / dislikedFoodOptions: [{ value, label }]
- * selectedConditions / selectedIntolerances / selectedDislikedFoods: value[]
+ * - Kan grubu (tekli): bloodTypeOptions / selectedBloodType / onSelectBloodType
+ * - Sigara kullanımı (tekli): smokingOptions / selectedSmoking / onSelectSmoking
+ * - Alkol kullanımı (tekli): alcoholOptions / selectedAlcohol / onSelectAlcohol
+ * - Kronik rahatsızlıklar (çoklu + özel ekleme): conditionOptions /
+ *   selectedConditions / onToggleCondition / onAddCustomCondition
+ * - Kullanılan ilaçlar (çoklu + özel ekleme): medicationOptions /
+ *   selectedMedications / onToggleMedication / onAddCustomMedication
+ * - Besin intoleransları (çoklu + özel ekleme): intoleranceOptions /
+ *   selectedIntolerances / onToggleIntolerance / onAddCustomIntolerance
+ * - Sevilmeyen besinler (çoklu + özel ekleme): dislikedFoodOptions /
+ *   selectedDislikedFoods / onToggleDislikedFood / onAddCustomFood
+ * - Son tahlil tarihi: lastLabDate / lastLabDateError / onLastLabDateChange
+ *
+ * Seçenek listeleri her zaman props'tan gelir; bu dosyada seçenek hardcode
+ * EDİLMEZ. Yargılamayan dil; alanlar boş bırakılabilir.
  */
 export function ProfileSetupStep4View({
   searchQuery = '',
+  bloodTypeOptions = [],
+  selectedBloodType = null,
+  smokingOptions = [],
+  selectedSmoking = null,
+  alcoholOptions = [],
+  selectedAlcohol = null,
   conditionOptions = [],
   selectedConditions = [],
+  medicationOptions = [],
+  selectedMedications = [],
   intoleranceOptions = [],
   selectedIntolerances = [],
   dislikedFoodOptions = [],
   selectedDislikedFoods = [],
+  lastLabDate = '',
+  lastLabDateError,
   step = 4,
   totalSteps = 4,
   onSearchQueryChange,
+  onSelectBloodType,
+  onSelectSmoking,
+  onSelectAlcohol,
   onToggleCondition,
+  onAddCustomCondition,
+  onToggleMedication,
+  onAddCustomMedication,
   onToggleIntolerance,
+  onAddCustomIntolerance,
   onToggleDislikedFood,
   onAddCustomFood,
+  onLastLabDateChange,
   onBack,
   onContinue,
   onSkip,
@@ -75,48 +137,68 @@ export function ProfileSetupStep4View({
       />
 
       <View style={styles.form}>
+        <SingleChipGroup
+          label="Kan grubu"
+          options={bloodTypeOptions}
+          selectedValue={selectedBloodType}
+          onSelect={onSelectBloodType}
+        />
+        <SingleChipGroup
+          label="Sigara kullanımı"
+          options={smokingOptions}
+          selectedValue={selectedSmoking}
+          onSelect={onSelectSmoking}
+        />
+        <SingleChipGroup
+          label="Alkol kullanımı"
+          options={alcoholOptions}
+          selectedValue={selectedAlcohol}
+          onSelect={onSelectAlcohol}
+          hint="Bu bilgiler değerlendirme için değil, yalnızca planının sana uyması için sorulur."
+        />
         <MultiChipGroup
           label="Kronik rahatsızlıklar"
           options={conditionOptions}
           selectedValues={selectedConditions}
           onToggle={onToggleCondition}
+          onAddCustom={onAddCustomCondition}
         />
         <MultiChipGroup
-          label="İntoleranslar"
+          label="Kullanılan ilaçlar"
+          options={medicationOptions}
+          selectedValues={selectedMedications}
+          onToggle={onToggleMedication}
+          onAddCustom={onAddCustomMedication}
+          hint="Düzenli kullandığın ilaçları ekle; doz bilgisini diyetisyeninle mesajda paylaşabilirsin."
+        />
+        <MultiChipGroup
+          label="Besin intoleransları"
           options={intoleranceOptions}
           selectedValues={selectedIntolerances}
           onToggle={onToggleIntolerance}
+          onAddCustom={onAddCustomIntolerance}
         />
-        <View>
-          <Text style={styles.groupLabel}>Sevilmeyen besinler</Text>
-          <View style={styles.chips}>
-            {dislikedFoodOptions.map((opt) => (
-              <ChoiceChip
-                key={opt.value}
-                label={opt.label}
-                selected={selectedDislikedFoods.includes(opt.value)}
-                onPress={
-                  onToggleDislikedFood ? () => onToggleDislikedFood(opt.value) : undefined
-                }
-              />
-            ))}
-            {onAddCustomFood ? (
-              <Pressable
-                onPress={onAddCustomFood}
-                accessibilityRole="button"
-                accessibilityLabel="Özel besin ekle"
-                hitSlop={4}
-                style={({ pressed }) => [styles.customAdd, pressed && styles.pressed]}
-              >
-                <Icon name="plus" size={14} color={colors.textSecondary} accessible={false} />
-                <Text style={styles.customAddText}>Özel ekle</Text>
-              </Pressable>
-            ) : null}
-          </View>
-          <Text style={styles.note}>
-            Eklediğin bir öğe listede tekrar gösterilmez; istediğin zaman kaldırabilirsin.
-          </Text>
-        </View>
+        <MultiChipGroup
+          label="Sevilmeyen besinler"
+          options={dislikedFoodOptions}
+          selectedValues={selectedDislikedFoods}
+          onToggle={onToggleDislikedFood}
+          onAddCustom={onAddCustomFood}
+          hint="Eklediğin bir öğe listede tekrar gösterilmez; istediğin zaman kaldırabilirsin."
+        />
+
+        <AppInput
+          label="Son tahlil tarihi"
+          value={lastLabDate}
+          onChangeText={onLastLabDateChange}
+          placeholder="GG.AA.YYYY"
+          error={lastLabDateError}
+          hint={
+            lastLabDateError
+              ? undefined
+              : 'Güncel tahlil sonuçlarını diyetisyeninle mesaj üzerinden paylaşabilirsin.'
+          }
+        />
       </View>
 
       <View style={styles.spacer} />

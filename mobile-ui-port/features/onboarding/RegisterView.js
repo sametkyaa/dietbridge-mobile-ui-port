@@ -11,6 +11,14 @@ import PasswordToggle from './PasswordToggle';
  *
  * passwordStrength: { percent: 0–100, label: string, tone?: 'primary'|'warning'|'error'|'success'|'teal'|'info' }
  *   — verilirse şifre alanının altında güç göstergesi render edilir.
+ *
+ * Kullanım koşulları akışı:
+ * - Checkbox satırına basmak onToggleTerms'i tetikler.
+ * - "Kullanım koşulları" metni ayrı tıklanabilir → onOpenTerms
+ * - "Gizlilik politikası" metni ayrı tıklanabilir → onOpenPrivacy
+ * - termsError verilirse checkbox altında erişilebilir hata gösterilir
+ *   (accessibilityLiveRegion="polite").
+ * - Kayıt butonu termsAccepted=false iken devre dışıdır.
  */
 export function RegisterView({
   fullName = '',
@@ -25,6 +33,9 @@ export function RegisterView({
   passwordError,
   passwordConfirmError,
   generalError,
+  termsError,
+  termsLinkLabel = 'Kullanım koşullarını',
+  privacyLinkLabel = 'gizlilik politikasını',
   passwordStrength = null,
   isSubmitting = false,
   onFullNameChange,
@@ -34,6 +45,8 @@ export function RegisterView({
   onTogglePassword,
   onTogglePasswordConfirm,
   onToggleTerms,
+  onOpenTerms,
+  onOpenPrivacy,
   onSubmit,
   onLogin,
 }) {
@@ -50,6 +63,8 @@ export function RegisterView({
           value={fullName}
           onChangeText={onFullNameChange}
           error={fullNameError}
+          autoCapitalize="words"
+          autoComplete="name"
           accessibilityLabel="Ad soyad"
         />
         <AppInput
@@ -58,6 +73,9 @@ export function RegisterView({
           onChangeText={onEmailChange}
           error={emailError}
           keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="email"
           accessibilityLabel="E-posta"
         />
         <View>
@@ -68,6 +86,9 @@ export function RegisterView({
             error={passwordError}
             placeholder="En az 8 karakter"
             secureTextEntry={!isPasswordVisible}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="new-password"
             accessibilityLabel="Şifre"
             rightAccessory={
               <PasswordToggle visible={isPasswordVisible} onToggle={onTogglePassword} />
@@ -92,6 +113,9 @@ export function RegisterView({
           error={passwordConfirmError}
           placeholder="Şifreni tekrar gir"
           secureTextEntry={!isPasswordConfirmVisible}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="new-password"
           accessibilityLabel="Şifre doğrulama"
           rightAccessory={
             <PasswordToggle
@@ -102,26 +126,51 @@ export function RegisterView({
         />
       </View>
 
-      <Pressable
-        onPress={onToggleTerms}
-        accessibilityRole="checkbox"
-        accessibilityLabel="Kullanım koşullarını ve gizlilik politikasını kabul ediyorum"
-        accessibilityState={{ checked: termsAccepted }}
-        hitSlop={8}
-        style={({ pressed }) => [styles.termsRow, pressed && styles.pressed]}
-      >
-        <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
-          {termsAccepted ? (
-            <Icon name="check" size={13} color={colors.white} accessible={false} />
-          ) : null}
+      <View style={styles.termsBlock}>
+        <View style={styles.termsRow}>
+          <Pressable
+            onPress={onToggleTerms}
+            accessibilityRole="checkbox"
+            accessibilityLabel="Kullanım koşullarını ve gizlilik politikasını kabul ediyorum"
+            accessibilityState={{ checked: termsAccepted }}
+            hitSlop={8}
+            style={({ pressed }) => [styles.checkboxHit, pressed && styles.pressed]}
+          >
+            <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
+              {termsAccepted ? (
+                <Icon name="check" size={13} color={colors.white} accessible={false} />
+              ) : null}
+            </View>
+          </Pressable>
+          <Text style={styles.termsText}>
+            <Text
+              onPress={onOpenTerms}
+              accessibilityRole="link"
+              accessibilityLabel="Kullanım koşullarını aç"
+              suppressHighlighting
+              style={styles.termsLink}
+            >
+              {termsLinkLabel}
+            </Text>
+            {' ve '}
+            <Text
+              onPress={onOpenPrivacy}
+              accessibilityRole="link"
+              accessibilityLabel="Gizlilik politikasını aç"
+              suppressHighlighting
+              style={styles.termsLink}
+            >
+              {privacyLinkLabel}
+            </Text>
+            {' kabul ediyorum.'}
+          </Text>
         </View>
-        <Text style={styles.termsText}>
-          <Text style={styles.termsStrong}>Kullanım koşullarını</Text>
-          {' ve '}
-          <Text style={styles.termsStrong}>gizlilik politikasını</Text>
-          {' kabul ediyorum.'}
-        </Text>
-      </Pressable>
+        {termsError ? (
+          <Text style={styles.termsError} accessibilityLiveRegion="polite">
+            {termsError}
+          </Text>
+        ) : null}
+      </View>
 
       {generalError ? (
         <InlineAlert variant="error" message={generalError} style={styles.alert} />
@@ -133,6 +182,7 @@ export function RegisterView({
         variant="primary"
         label={isSubmitting ? 'Hesap oluşturuluyor…' : 'Kayıt ol'}
         loading={isSubmitting}
+        disabled={!termsAccepted || isSubmitting}
         onPress={onSubmit}
         accessibilityLabel="Kayıt ol"
       />
@@ -166,12 +216,16 @@ const styles = StyleSheet.create({
   strength: { marginTop: spacing.x2, gap: spacing.x1 },
   strengthBar: { width: '100%' },
   strengthLabel: { ...typography.caption, color: colors.textSecondary },
+  termsBlock: { marginTop: spacing.x5, gap: spacing.x2 },
   termsRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.x3,
-    marginTop: spacing.x5,
     minHeight: 44,
+  },
+  checkboxHit: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   checkbox: {
     width: 24,
@@ -190,7 +244,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     paddingTop: 2,
   },
-  termsStrong: { fontWeight: '500', color: colors.textPrimary },
+  termsLink: { fontWeight: '600', color: colors.primary },
+  termsError: {
+    ...typography.supporting,
+    color: colors.error,
+    marginLeft: spacing.x3 + 24 + spacing.x3,
+  },
   alert: { marginTop: spacing.x4 },
   spacer: { flex: 1, minHeight: spacing.x6 },
   footer: {

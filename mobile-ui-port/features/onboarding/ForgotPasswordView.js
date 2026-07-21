@@ -35,6 +35,9 @@ export function ForgotPasswordView({
         onChangeText={onEmailChange}
         error={emailError}
         keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="email"
         accessibilityLabel="E-posta"
         style={styles.field}
       />

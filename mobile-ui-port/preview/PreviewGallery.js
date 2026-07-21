@@ -443,6 +443,53 @@ function HomeStatesDemo() {
           {...homeCallbacks}
         />
       </Frame>
+
+      <Text style={styles.demoCaption}>Öğün işlemi sürüyor (pending — hero ve satır kilitli)</Text>
+      <Frame>
+        <HomeView
+          status="ready"
+          user={previewData.user}
+          dateLabel={previewData.today.date}
+          macros={buildMacros(previewData.meals)}
+          nextMeal={{ ...previewData.nextMeal, badgeLabel: '45 dk sonra' }}
+          nextMealSummary="Izgara tavuk, Akdeniz yeşillikleri, zeytin ve bir kâse ayran"
+          meals={mealsWithLabels}
+          water={homeWater}
+          dietitianMessage={homeMessage}
+          updatingMealId="m3"
+          {...homeCallbacks}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>Su ekleme sürüyor (pending — hızlı düğmeler kilitli)</Text>
+      <Frame tall={false}>
+        <HomeView
+          status="ready"
+          user={previewData.user}
+          dateLabel={previewData.today.date}
+          macros={buildMacros(previewData.meals)}
+          nextMeal={{ ...previewData.nextMeal, badgeLabel: '45 dk sonra' }}
+          meals={mealsWithLabels}
+          water={homeWater}
+          isAddingWater
+          {...homeCallbacks}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>Su geri alma sürüyor (pending — geri al kilitli)</Text>
+      <Frame tall={false}>
+        <HomeView
+          status="ready"
+          user={previewData.user}
+          dateLabel={previewData.today.date}
+          macros={buildMacros(previewData.meals)}
+          nextMeal={{ ...previewData.nextMeal, badgeLabel: '45 dk sonra' }}
+          meals={mealsWithLabels}
+          water={homeWater}
+          isUndoingWater
+          {...homeCallbacks}
+        />
+      </Frame>
     </Section>
   );
 }
@@ -516,6 +563,37 @@ function MealPlanDemo() {
           onNextWeek={noop}
         />
       </Frame>
+
+      <Text style={styles.demoCaption}>Hata (tekrar dene)</Text>
+      <Frame tall={false}>
+        <MealPlanView
+          status="error"
+          weekLabel="14–20 Temmuz"
+          days={planDays}
+          selectedDayId="day-19"
+          onSelectDay={noop}
+          onPreviousWeek={noop}
+          onNextWeek={noop}
+          onRetry={noop}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>Öğün toggle işlemi sürüyor (pending — yalnız o satır kilitli)</Text>
+      <Frame>
+        <MealPlanView
+          weekLabel="14–20 Temmuz"
+          days={planDays}
+          selectedDayId="day-19"
+          selectedDayLabel="19 Temmuz Pazar"
+          meals={previewData.meals}
+          updatingMealId="m3"
+          onSelectDay={noop}
+          onPreviousWeek={noop}
+          onNextWeek={noop}
+          onMealPress={noop}
+          onToggleMeal={noop}
+        />
+      </Frame>
     </Section>
   );
 }
@@ -559,6 +637,17 @@ function MealDetailDemo() {
           onRemovePhoto={noop}
         />
       </Frame>
+      <Text style={styles.demoCaption}>Tamamlama işlemi sürüyor (pending — CTA kilitli)</Text>
+      <Frame>
+        <MealDetailView
+          meal={detailMeal}
+          completionState="pending"
+          isCompletionUpdating
+          onBack={noop}
+          onToggleComplete={noop}
+          onAddPhoto={noop}
+        />
+      </Frame>
     </Section>
   );
 }
@@ -570,12 +659,16 @@ function FeatureSheetsDemo() {
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState(false);
   const [waterSheet, setWaterSheet] = useState(false);
+  const [waterSheetPending, setWaterSheetPending] = useState(false);
+  const [longSheet, setLongSheet] = useState(false);
   return (
     <Section title="Sheet görünümleri">
       <AppButton variant="secondary" label="Fotoğraf ekleme sheet'i" onPress={() => setPhotoSheet(true)} />
       <AppButton variant="secondary" label="Fotoğraf yükleniyor" onPress={() => setUploading(true)} />
       <AppButton variant="secondary" label="Fotoğraf hatası" onPress={() => setPhotoError(true)} />
       <AppButton variant="secondary" label="Su takibi sheet'i" onPress={() => setWaterSheet(true)} />
+      <AppButton variant="secondary" label="Su sheet'i — ekleme + geri alma pending" onPress={() => setWaterSheetPending(true)} />
+      <AppButton variant="secondary" label="Uzun içerik (klavye + scroll uyumlu)" onPress={() => setLongSheet(true)} />
 
       <MealPhotoSheetView
         visible={photoSheet}
@@ -608,6 +701,35 @@ function FeatureSheetsDemo() {
         onOpenHistory={noop}
         onClose={() => setWaterSheet(false)}
       />
+      <WaterSheetView
+        visible={waterSheetPending}
+        currentMl={1400}
+        goalMl={2500}
+        lastEntryLabel="250 ml eklendi"
+        isAddingWater
+        isUndoingWater
+        onAddWater={noop}
+        onUndoWater={noop}
+        onOpenHistory={noop}
+        onClose={() => setWaterSheetPending(false)}
+      />
+      <BottomSheetView
+        visible={longSheet}
+        onClose={() => setLongSheet(false)}
+        title="Klavye ve küçük ekran uyumu"
+        scrollable
+        footer={<AppButton variant="primary" label="Kaydet" onPress={() => setLongSheet(false)} />}
+      >
+        <Text style={styles.sheetText}>
+          Bu sheet scrollable=true ile açılır; içerik uzadığında kaydırılır, klavye açıldığında
+          footer klavye arkasında kalmaz ve yükseklik ekranın yaklaşık %90'ını aşmaz.
+        </Text>
+        <AppInput label="Bel (cm)" value="78" onChangeText={noop} keyboardType="decimal-pad" />
+        <AppInput label="Kalça (cm)" value="99" onChangeText={noop} keyboardType="decimal-pad" />
+        <AppInput label="Göğüs (cm)" value="94" onChangeText={noop} keyboardType="decimal-pad" />
+        <AppInput label="Kol (cm)" value="30" onChangeText={noop} keyboardType="decimal-pad" />
+        <AppInput label="Not" value="" onChangeText={noop} placeholder="İsteğe bağlı not" multiline />
+      </BottomSheetView>
     </Section>
   );
 }
@@ -668,11 +790,6 @@ const DIET_TYPE_OPTIONS = [
   { value: 'vegan', label: 'Vegan' },
   { value: 'pescatarian', label: 'Pesketaryen' },
 ];
-const SLEEP_OPTIONS = [
-  { value: 'under6', label: '6 saatin altı' },
-  { value: '6to8', label: '6–8 saat' },
-  { value: 'over8', label: '8 saatin üzeri' },
-];
 const CONDITION_OPTIONS = [
   { value: 'none', label: 'Yok' },
   { value: 'hypertension', label: 'Hipertansiyon' },
@@ -687,6 +804,23 @@ const INTOLERANCE_OPTIONS = [
   { value: 'fructose', label: 'Fruktoz' },
 ];
 const DISLIKED_FOOD_OPTIONS = [{ value: 'coriander', label: 'Kişniş' }];
+const STEP4_BLOOD_TYPE_OPTIONS = [
+  { value: 'aPos', label: 'A Rh+' },
+  { value: 'bPos', label: 'B Rh+' },
+  { value: 'oPos', label: '0 Rh+' },
+  { value: 'unknown', label: 'Bilmiyorum' },
+];
+const STEP4_SMOKING_OPTIONS = [
+  { value: 'none', label: 'Kullanmıyorum' },
+  { value: 'occasional', label: 'Arada' },
+  { value: 'daily', label: 'Her gün' },
+];
+const STEP4_ALCOHOL_OPTIONS = [
+  { value: 'none', label: 'Kullanmıyorum' },
+  { value: 'occasional', label: 'Arada' },
+  { value: 'weekly', label: 'Haftada birkaç kez' },
+];
+const MEDICATION_OPTIONS = [{ value: 'levothyroxine', label: 'Levotiroksin' }];
 
 const toggleInList = (list, value) =>
   list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -741,14 +875,19 @@ function OnboardingAuthDemo() {
   const [step3, setStep3] = useState({
     activity: 'moderate',
     dietType: 'everything',
-    sleep: '6to8',
+    sleepHours: '7,5',
     waterGoal: 2.5,
   });
   const [step4, setStep4] = useState({
     search: '',
+    bloodType: 'unknown',
+    smoking: 'none',
+    alcohol: 'none',
     conditions: [],
+    medications: [],
     intolerances: ['lactose'],
     dislikedFoods: ['coriander'],
+    lastLabDate: '',
   });
 
   /* Diyetisyen bağlantısı */
@@ -853,6 +992,8 @@ function OnboardingAuthDemo() {
           onTogglePassword={() => setRegisterField({ visible: !register.visible })}
           onTogglePasswordConfirm={() => setRegisterField({ confirmVisible: !register.confirmVisible })}
           onToggleTerms={() => setRegisterField({ terms: !register.terms })}
+          onOpenTerms={noop}
+          onOpenPrivacy={noop}
           onSubmit={noop}
           onLogin={noop}
         />
@@ -878,6 +1019,57 @@ function OnboardingAuthDemo() {
           onTogglePassword={() => setRegisterField({ visible: !register.visible })}
           onTogglePasswordConfirm={() => setRegisterField({ confirmVisible: !register.confirmVisible })}
           onToggleTerms={() => setRegisterField({ terms: !register.terms })}
+          onOpenTerms={noop}
+          onOpenPrivacy={noop}
+          onSubmit={noop}
+          onLogin={noop}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>RegisterView — koşullar kabul edilmedi (buton pasif)</Text>
+      <Frame>
+        <RegisterView
+          fullName={register.fullName}
+          email={register.email}
+          password={register.password}
+          passwordConfirm={register.passwordConfirm}
+          isPasswordVisible={register.visible}
+          isPasswordConfirmVisible={register.confirmVisible}
+          termsAccepted={false}
+          onFullNameChange={(v) => setRegisterField({ fullName: v })}
+          onEmailChange={(v) => setRegisterField({ email: v })}
+          onPasswordChange={(v) => setRegisterField({ password: v })}
+          onPasswordConfirmChange={(v) => setRegisterField({ passwordConfirm: v })}
+          onTogglePassword={() => setRegisterField({ visible: !register.visible })}
+          onTogglePasswordConfirm={() => setRegisterField({ confirmVisible: !register.confirmVisible })}
+          onToggleTerms={noop}
+          onOpenTerms={noop}
+          onOpenPrivacy={noop}
+          onSubmit={noop}
+          onLogin={noop}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>RegisterView — koşul hatası (termsError)</Text>
+      <Frame>
+        <RegisterView
+          fullName={register.fullName}
+          email={register.email}
+          password={register.password}
+          passwordConfirm={register.passwordConfirm}
+          isPasswordVisible={register.visible}
+          isPasswordConfirmVisible={register.confirmVisible}
+          termsAccepted={false}
+          termsError="Devam etmek için kullanım koşullarını ve gizlilik politikasını kabul etmen gerekir."
+          onFullNameChange={(v) => setRegisterField({ fullName: v })}
+          onEmailChange={(v) => setRegisterField({ email: v })}
+          onPasswordChange={(v) => setRegisterField({ password: v })}
+          onPasswordConfirmChange={(v) => setRegisterField({ passwordConfirm: v })}
+          onTogglePassword={() => setRegisterField({ visible: !register.visible })}
+          onTogglePasswordConfirm={() => setRegisterField({ confirmVisible: !register.confirmVisible })}
+          onToggleTerms={noop}
+          onOpenTerms={noop}
+          onOpenPrivacy={noop}
           onSubmit={noop}
           onLogin={noop}
         />
@@ -935,19 +1127,18 @@ function OnboardingAuthDemo() {
         />
       </Frame>
 
-      <Text style={styles.demoCaption}>ProfileSetupStep3View — Yaşam tarzı</Text>
+      <Text style={styles.demoCaption}>ProfileSetupStep3View — Yaşam tarzı (sayısal uyku girişi)</Text>
       <Frame>
         <ProfileSetupStep3View
           activityOptions={ACTIVITY_OPTIONS}
           selectedActivity={step3.activity}
           dietTypeOptions={DIET_TYPE_OPTIONS}
           selectedDietType={step3.dietType}
-          sleepOptions={SLEEP_OPTIONS}
-          selectedSleep={step3.sleep}
+          sleepHours={step3.sleepHours}
           waterGoalLabel={step3.waterGoal.toLocaleString('tr-TR', { minimumFractionDigits: 1 })}
           onSelectActivity={(v) => setStep3((s) => ({ ...s, activity: v }))}
           onSelectDietType={(v) => setStep3((s) => ({ ...s, dietType: v }))}
-          onSelectSleep={(v) => setStep3((s) => ({ ...s, sleep: v }))}
+          onSleepHoursChange={(v) => setStep3((s) => ({ ...s, sleepHours: v }))}
           onDecreaseWaterGoal={() =>
             setStep3((s) => ({ ...s, waterGoal: Math.max(0.5, s.waterGoal - 0.25) }))
           }
@@ -957,25 +1148,64 @@ function OnboardingAuthDemo() {
         />
       </Frame>
 
-      <Text style={styles.demoCaption}>ProfileSetupStep4View — Sağlık ve beslenme</Text>
+      <Text style={styles.demoCaption}>ProfileSetupStep3View — uyku saati hatası (host'tan)</Text>
+      <Frame tall={false}>
+        <ProfileSetupStep3View
+          activityOptions={ACTIVITY_OPTIONS}
+          selectedActivity={step3.activity}
+          dietTypeOptions={DIET_TYPE_OPTIONS}
+          selectedDietType={step3.dietType}
+          sleepHours="26"
+          sleepHoursError="0 ile 24 arasında bir değer gir."
+          waterGoalLabel={step3.waterGoal.toLocaleString('tr-TR', { minimumFractionDigits: 1 })}
+          onSelectActivity={(v) => setStep3((s) => ({ ...s, activity: v }))}
+          onSelectDietType={(v) => setStep3((s) => ({ ...s, dietType: v }))}
+          onSleepHoursChange={noop}
+          onDecreaseWaterGoal={noop}
+          onIncreaseWaterGoal={noop}
+          onBack={noop}
+          onContinue={noop}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>ProfileSetupStep4View — tam sağlık adımı</Text>
       <Frame>
         <ProfileSetupStep4View
           searchQuery={step4.search}
+          bloodTypeOptions={STEP4_BLOOD_TYPE_OPTIONS}
+          selectedBloodType={step4.bloodType}
+          smokingOptions={STEP4_SMOKING_OPTIONS}
+          selectedSmoking={step4.smoking}
+          alcoholOptions={STEP4_ALCOHOL_OPTIONS}
+          selectedAlcohol={step4.alcohol}
           conditionOptions={CONDITION_OPTIONS}
           selectedConditions={step4.conditions}
+          medicationOptions={MEDICATION_OPTIONS}
+          selectedMedications={step4.medications}
           intoleranceOptions={INTOLERANCE_OPTIONS}
           selectedIntolerances={step4.intolerances}
           dislikedFoodOptions={DISLIKED_FOOD_OPTIONS}
           selectedDislikedFoods={step4.dislikedFoods}
+          lastLabDate={step4.lastLabDate}
           onSearchQueryChange={(v) => setStep4((s) => ({ ...s, search: v }))}
+          onSelectBloodType={(v) => setStep4((s) => ({ ...s, bloodType: v }))}
+          onSelectSmoking={(v) => setStep4((s) => ({ ...s, smoking: v }))}
+          onSelectAlcohol={(v) => setStep4((s) => ({ ...s, alcohol: v }))}
           onToggleCondition={(v) => setStep4((s) => ({ ...s, conditions: toggleInList(s.conditions, v) }))}
+          onAddCustomCondition={noop}
+          onToggleMedication={(v) =>
+            setStep4((s) => ({ ...s, medications: toggleInList(s.medications, v) }))
+          }
+          onAddCustomMedication={noop}
           onToggleIntolerance={(v) =>
             setStep4((s) => ({ ...s, intolerances: toggleInList(s.intolerances, v) }))
           }
+          onAddCustomIntolerance={noop}
           onToggleDislikedFood={(v) =>
             setStep4((s) => ({ ...s, dislikedFoods: toggleInList(s.dislikedFoods, v) }))
           }
           onAddCustomFood={noop}
+          onLastLabDateChange={(v) => setStep4((s) => ({ ...s, lastLabDate: v }))}
           onBack={noop}
           onContinue={noop}
         />
@@ -1172,6 +1402,57 @@ function MessagesDemo() {
           onBack={noop}
         />
       </Frame>
+
+      <Text style={styles.demoCaption}>ChatView — yükleniyor</Text>
+      <Frame tall={false}>
+        <ChatView
+          conversation={previewData.chatConversation}
+          status="loading"
+          onBack={noop}
+          onComposerChange={noop}
+          onSend={noop}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>ChatView — boş sohbet</Text>
+      <Frame tall={false}>
+        <ChatView
+          conversation={previewData.chatConversation}
+          status="empty"
+          onBack={noop}
+          onComposerChange={noop}
+          onSend={noop}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>ChatView — hata (tekrar dene)</Text>
+      <Frame tall={false}>
+        <ChatView
+          conversation={previewData.chatConversation}
+          status="error"
+          onBack={noop}
+          onRetry={noop}
+          onComposerChange={noop}
+          onSend={noop}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>ChatView — eski mesajlar yükleniyor (sayfalama)</Text>
+      <Frame>
+        <ChatView
+          conversation={previewData.chatConversation}
+          messages={messages}
+          composerValue={composer}
+          hasMore
+          isLoadingMore
+          onLoadMore={noop}
+          onComposerChange={setComposer}
+          onSend={send}
+          onRetryMessage={retry}
+          onPickImage={noop}
+          onBack={noop}
+        />
+      </Frame>
     </Section>
   );
 }
@@ -1211,7 +1492,6 @@ const HEALTH_CONDITION_OPTIONS = [
   { value: 'asthma', label: 'Astım' },
   { value: 'celiac', label: 'Çölyak' },
 ];
-const MEDICATION_OPTIONS = [{ value: 'levothyroxine', label: 'Levotiroksin' }];
 const HEALTH_INTOLERANCE_OPTIONS = [
   { value: 'lactose', label: 'Laktoz' },
   { value: 'sesame', label: 'Susam' },
@@ -1251,13 +1531,31 @@ function ProfileDemo() {
         <ProfileView status="loading" />
       </Frame>
 
-      <Text style={styles.demoCaption}>PersonalInfoEditView</Text>
+      <Text style={styles.demoCaption}>PersonalInfoEditView — e-posta salt okunur (ayrı Auth akışı)</Text>
       <Frame>
         <PersonalInfoEditView
           values={personal}
           initials={previewData.user.initials}
+          email={previewData.user.email}
           onFieldChange={(k, v) => setPersonal((s) => ({ ...s, [k]: v }))}
           onChangePhoto={noop}
+          onRequestEmailChange={noop}
+          onSave={noop}
+          onCancel={noop}
+          onBack={noop}
+        />
+      </Frame>
+
+      <Text style={styles.demoCaption}>PersonalInfoEditView — e-posta doğrulama bekleniyor</Text>
+      <Frame>
+        <PersonalInfoEditView
+          values={personal}
+          initials={previewData.user.initials}
+          email={previewData.user.email}
+          emailChangePending
+          onFieldChange={(k, v) => setPersonal((s) => ({ ...s, [k]: v }))}
+          onChangePhoto={noop}
+          onRequestEmailChange={noop}
           onSave={noop}
           onCancel={noop}
           onBack={noop}
@@ -1285,14 +1583,13 @@ function ProfileDemo() {
         />
       </Frame>
 
-      <Text style={styles.demoCaption}>LifestyleEditView</Text>
+      <Text style={styles.demoCaption}>LifestyleEditView — sayısal uyku girişi</Text>
       <Frame>
         <LifestyleEditView
           values={lifestyle}
           options={{
             activity: ACTIVITY_OPTIONS,
             dietType: DIET_TYPE_OPTIONS,
-            sleep: SLEEP_OPTIONS,
             smoking: SMOKING_OPTIONS,
             alcohol: ALCOHOL_OPTIONS,
           }}
@@ -1337,18 +1634,27 @@ function ProfileDemo() {
         />
       </Frame>
 
-      <Text style={styles.demoCaption}>PrivacySecurityView</Text>
+      <Text style={styles.demoCaption}>PrivacySecurityView — tüm özellikler açık (preview)</Text>
       <Frame tall={false}>
         <PrivacySecurityView
           twoFactorEnabled={twoFactor}
           onToggleTwoFactor={() => setTwoFactor((v) => !v)}
           sessionSummary="2 cihazda açık"
+          showTwoFactor
+          showSessions
+          showDataExport
+          showDeleteAccount
           onChangePassword={noop}
           onOpenSessions={noop}
           onExportData={noop}
           onDeleteAccount={noop}
           onBack={noop}
         />
+      </Frame>
+
+      <Text style={styles.demoCaption}>PrivacySecurityView — production varsayılanı (flag'ler kapalı)</Text>
+      <Frame tall={false}>
+        <PrivacySecurityView onChangePassword={noop} onBack={noop} />
       </Frame>
 
       <Text style={styles.demoCaption}>UnsavedChangesDialogView</Text>

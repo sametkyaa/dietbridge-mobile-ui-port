@@ -404,14 +404,13 @@ export const previewProfileSections = [
 /* Profil düzenleme formları — başlangıç değerleri (UI preview) */
 export const previewPersonalInfoForm = {
   fullName: previewUser.name,
-  email: previewUser.email,
   phone: '0532 418 76 90',
   birthDate: '22 Ekim 1994',
 };
 
+/* Mevcut kilo bu formda YOK — ayrı ölçüm akışı (ProgressView + AddWeightSheetView) */
 export const previewGoalForm = {
   heightCm: '167',
-  currentWeightKg: previewWeight.current,
   targetWeightKg: previewWeight.goal,
   goal: 'lose',
   waterGoalLitres: previewWaterGoalL,
@@ -421,10 +420,11 @@ export const previewGoalForm = {
   armCm: '29',
 };
 
+/* Uyku sayısal saat olarak tutulur (chip değil) */
 export const previewLifestyleForm = {
   activity: 'moderate',
   dietType: 'everything',
-  sleep: '6to8',
+  sleepHours: '7,5',
   smoking: 'none',
   alcohol: 'occasional',
 };
